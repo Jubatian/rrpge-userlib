@@ -1,0 +1,6 @@
+# Any output file from Make
+/app.rpa
+/userlib.bin
+/userlib.txt
+/genulib
+/genulib.o
