@@ -7,6 +7,10 @@
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
 ;
+;
+; This should be placed near copy.asm and set.asm so the short jumps to the
+; tail-called functions stay in range.
+;
 
 include "rrpge.asm"
 include "copy.asm"
@@ -44,8 +48,11 @@ us_copy_pfp_l_i:
 	add [$.lnh], c		; ('c' becomes 0xFFFF on borrow)
 	jms .l0
 
-.le:	jfa us_copy_pfp {[$.tgh], [$.tgl], [$.srh], [$.srl], [$.lnl]}
-	rfn
+.le:	; Tail call to normal PRAM <= PRAM copy
+
+	mov c,     [$.lnl]
+	mov [$.lnh], c
+	jms us_copy_pfp
 
 
 
@@ -73,5 +80,8 @@ us_set_p_l_i:
 	add [$.lnh], c		; ('c' becomes 0xFFFF on borrow)
 	jms .l0
 
-.le:	jfa us_set_p {[$.tgh], [$.tgl], [$.src], [$.lnl]}
-	rfn
+.le:	; Tail call to normal PRAM set
+
+	mov c,     [$.lnl]
+	mov [$.lnh], c
+	jms us_set_p
