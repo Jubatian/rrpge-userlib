@@ -31,7 +31,7 @@ us_dlist_db_setptr_i:
 
 	; Add Display List Definition, then transfer
 
-	jfa us_dbuf_getlist
+	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 	jms us_dlist_setptr_i
 
@@ -58,7 +58,7 @@ us_dlist_db_add_i:
 
 	; Add Display List Definition, then transfer
 
-	jfa us_dbuf_getlist
+	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 	jms us_dlist_add_i
 
@@ -87,7 +87,7 @@ us_dlist_db_addxy_i:
 
 	; Add Display List Definition, then transfer
 
-	jfa us_dbuf_getlist
+	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 	jms us_dlist_addxy_i
 
@@ -113,7 +113,7 @@ us_dlist_db_addbg_i:
 
 	; Add Display List Definition, then transfer
 
-	jfa us_dbuf_getlist
+	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 	jms us_dlist_addbg_i
 
@@ -140,7 +140,7 @@ us_dlist_db_addlist_i:
 
 	; Add Display List Definition, then transfer
 
-	jfa us_dbuf_getlist
+	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 	jms us_dlist_addlist_i
 
@@ -157,6 +157,6 @@ us_dlist_db_clear_i:
 
 	; Add Display List Definition, then transfer
 
-	jfa us_dbuf_getlist
+	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 	jms us_dlist_clear_i
