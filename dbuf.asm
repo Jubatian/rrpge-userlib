@@ -18,6 +18,7 @@
 ; 0xFAEF: Absolute offset of first free slot in flip hooks
 ; 0xFAEE: Absolute offset of first free slot in frame hooks
 ; 0xFAE0 - 0xFAED: Frame end hooks (functions to call when frame ends)
+; 0xF990 - 0xF99F: Work & Display surface pairs
 ;
 
 
@@ -28,22 +29,25 @@ section code
 
 
 
-; 0xF96F: Current display buffer display list offset
+; 0xFAFF: Current display buffer display list offset
 us_dbuf_dl	equ	0xFAFF
-; 0xF96E: Current work buffer display list offset
+; 0xFAEE: Current work buffer display list offset
 us_dbuf_wl	equ	0xFAFE
-; 0xF96D: Flip performed flag (indicates the need to call frame hooks)
+; 0xFAFD: Flip performed flag (indicates the need to call frame hooks)
 us_dbuf_ff	equ	0xFAFD
-; 0xF960 - 0xF96C: Page flip hooks (functions to call when flipping pages)
+; 0xFAF0 - 0xFAFC: Page flip hooks (functions to call when flipping pages)
 us_dbuf_flpa	equ	0xFAF0
 us_dbuf_flpe	equ	0xFAFD
-; 0xF95F: Absolute offset of first free slot in flip hooks
+; 0xFAEF: Absolute offset of first free slot in flip hooks
 us_dbuf_flpf	equ	0xFAEF
-; 0xF95E: Absolute offset of first free slot in frame hooks
+; 0xFAEE: Absolute offset of first free slot in frame hooks
 us_dbuf_fraf	equ	0xFAEE
-; 0xF950 - 0xF95D: Frame end hooks (functions to call when frame ends)
+; 0xFAE0 - 0xFAED: Frame end hooks (functions to call when frame ends)
 us_dbuf_fraa	equ	0xFAE0
 us_dbuf_frae	equ	0xFAEE
+; 0xF990: Work & Display surface pairs (work high, display high, work low, display low)
+us_dbuf_sura	equ	0xF990
+us_dbuf_sure	equ	0xF9A0
 
 
 
@@ -183,6 +187,17 @@ us_dbuf_flip_i:
 	xch x3,    [us_dbuf_wl]
 	mov [P_GDG_DLDEF], x3
 	mov [us_dbuf_dl], x3
+
+	; Flip surfaces (X3 is in incrementing 16 bit mode)
+
+	mov x3,    us_dbuf_sura
+.ls:	mov c,     [x3]		; Load work surface element
+	xch c,     [x3]		; Swap display surface element with it
+	sub x3,    2
+	mov [x3],  c		; Store previous display surface element to the work element
+	add x3,    1
+	xeq x3,    us_dbuf_sure	; Swapped all?
+	jms .ls
 
 	; Call flip hooks, simply tail-transfer to it
 
@@ -340,3 +355,65 @@ us_dbuf_remframehook_i:
 .exit:	; Done, removed if found, exit
 
 	rfn
+
+
+
+;
+; Implementation of us_dbuf_setsurface
+;
+us_dbuf_setsurface_i:
+
+.sid	equ	0		; Surface ID to set
+.dsh	equ	1		; Display surface, high
+.dsl	equ	2		; Display surface, low
+.wrh	equ	3		; Work surface, high
+.wrl	equ	4		; Work surface, low
+
+	mov x3,    [$.sid]
+	and x3,    3		; Only 4 surfaces
+	shl x3,    2		; Offset of surface pair
+	add x3,    us_dbuf_sura
+	mov c,     [$.wrh]
+	mov [x3],  c
+	mov c,     [$.dsh]
+	mov [x3],  c
+	mov c,     [$.wrl]
+	mov [x3],  c
+	mov c,     [$.dsl]
+	mov [x3],  c
+	rfn
+
+
+
+;
+; Implementation of us_dbuf_getsurface
+;
+us_dbuf_getsurface_i:
+
+.sid	equ	0		; Surface ID to get
+
+	; Optimized for fastest normal return path. This little function may
+	; be called many times.
+
+	; Frame hooks were called already?
+
+	xbc [us_dbuf_ff], 0
+	jms .lp			; If not, then wait and call them
+
+.exit:	; Return the current work surface
+
+	mov x3,    [$.sid]
+	and x3,    3		; Only 4 surfaces
+	shl x3,    2		; Offset of surface pair
+	add x3,    us_dbuf_sura
+	mov c,     [x3]		; Work surface, high
+	add x3,    1		; Skip display surface, high
+	mov x3,    [x3]		; Work surface, low
+	rfn
+
+	; Wait frame end, then call frame hooks
+
+.lp:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
+	jms .lp
+	jfa us_dbuf_i_framecall
+	jms .exit
