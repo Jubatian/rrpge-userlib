@@ -162,11 +162,11 @@ us_dlist_add_i:
 
 	; Add new graphics element to each line.
 
-	mov c,     [$.hgt]	; Number of lines to do (0 is also OK)
-	mov a,     c
-	and c,     0xFFFC
-	and a,     0x0003
-	mov x3,    22
+	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
+	and c,     [$.hgt]	; Note: Zero height is also OK
+	and a,     [$.hgt]
+	mov x3,    22		; Offset of .lt0 relative to jmr
 	sub x3,    a
 	shl a,     2
 	sub x3,    a		; Calculate loop entry (rel. jump to .ltx)
@@ -219,11 +219,11 @@ us_dlist_addxy_i:
 	mov [$8],  d
 
 	; Push stuff around a bit to make it right for jumping into
-	; us_dlist_add_i: load X position in C, and fill the Y position in
+	; us_dlist_add_i: load X position in A, and fill the Y position in
 	; it's place.
 
-	mov c,     [$.psy]
-	xch c,     [$.psx]
+	mov a,     [$.psy]
+	xch a,     [$.psx]
 
 	; Calculate source width multiplier so to know how many to add to the
 	; source line select to advance one line. Shift source is not checked
@@ -236,20 +236,25 @@ us_dlist_addxy_i:
 	mov d,     [x3]		; Load source definition
 	and d,     0xF
 	shl d,     1
-	add d,     1		; Width multiplier: 1 to 31, odd
+	add c:d,   1		; Width multiplier: 1 to 31, odd (c is zeroed)
 	mov [$.mul], d
+
+	; Set C to one for 8 bit mode, to be used in subsequend mode specific
+	; adjustments.
+
+	xbc [$.dld], 12		; 4 bit mode if clear
+	mov c,     1		; 1 in 8 bit mode, 0 in 4 bit mode
 
 	; Calculate X high limit
 
 	mov x3,    640
-	xbc [$.dld], 12		; 4 bit mode if clear
-	shr x3,    1		; 320 in 8 bit mode
+	shr x3,    c		; 320 in 8 bit mode
 
 	; Check on-screen
 
-	xug x3,    c		; Off-screen to the right?
+	xug x3,    a		; Off-screen to the right?
 	jms us_dlist_add_i.exit
-	xbs c,     15		; Signed? If so, maybe partly on-screen on left.
+	xbs a,     15		; Signed? If so, maybe partly on-screen on left.
 	jms .onsc
 
 	; Negative X: possibly partly on-screen. Need to check this situation.
@@ -257,23 +262,20 @@ us_dlist_addxy_i:
 	mov x3,    [$.rch]
 	shl x3,    5
 	and x3,    7		; Source line size shift
+	sbc x3,    0xFFFD	; Adjust: +3 (8 pixels / cell) for 4 bit, +2 (4 pixels / cell) for 8 bit mode
 	mov d,     [$.mul]
-	shl d,     2		; 4 pixels / cell in 8 bit mode
-	xbs [$.dld], 12		; 8 bit mode if set
-	shl d,     1		; 8 pixels / cell in 4 bit mode
 	shl d,     x3		; Width of graphic element in pixels
-	add d,     c
+	add d,     a
 	xsg d,     0		; 1 or more (signed): graphics is on-screen
 	jms us_dlist_add_i.exit
 
 	; Graphics on-screen, render it
 
-.onsc:	xbc [$.dld], 12		; 4 bit mode if clear
-	shl c,     1		; Scale X position for 8 bit mode
-	and c,     0x03FF	; 10 bits for shift / position
+.onsc:	shl a,     c		; Double X position for 8 bit mode
+	and a,     0x03FF	; 10 bits for shift / position
 	mov d,     0xFC00	; Preserve high part of command
 	and [$.rcl], d
-	or  [$.rcl], c
+	or  [$.rcl], a
 	jms us_dlist_add_i.entr
 
 
@@ -324,11 +326,11 @@ us_dlist_addbg_i:
 
 	; Add new graphics element to each line.
 
-	mov c,     [$.hgt]	; Number of lines to do (0 is also OK)
-	mov a,     c
-	and c,     0xFFFC
-	and a,     0x0003
-	mov x3,    18
+	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
+	and c,     [$.hgt]	; Note: Zero height is also OK
+	and a,     [$.hgt]
+	mov x3,    18		; Offset of .lt0 relative to jmr
 	shl a,     2
 	sub x3,    a		; Calculate loop entry (rel. jump to .ltx)
 	mov a,     [$.bgh]	; High part of background
@@ -404,11 +406,11 @@ us_dlist_addlist_i:
 
 	; Add new graphics element to each line.
 
-	mov c,     [$.hgt]	; Number of lines to do (0 is also OK)
-	mov a,     c
-	and c,     0xFFFC
-	and a,     0x0003
-	mov x3,    34
+	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
+	and c,     [$.hgt]	; Note: Zero height is also OK
+	and a,     [$.hgt]
+	mov x3,    34		; Offset of .lt0 relative to jmr
 	shl a,     3
 	sub x3,    a		; Calculate loop entry (rel. jump to .ltx)
 	jmr x3
