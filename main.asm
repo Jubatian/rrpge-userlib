@@ -72,7 +72,9 @@ org 0xF000				; Bottom of entry table
 	jma us_dbuf_addfliphook_i	; 0xF060 dbuf.asm
 	jma us_dbuf_remfliphook_i	; 0xF062 dbuf.asm
 	jma us_dbuf_addframehook_i	; 0xF064 dbuf.asm
-	jma us_dbuf_remframehook_i	; 0xF068 dbuf.asm
+	jma us_dbuf_remframehook_i	; 0xF066 dbuf.asm
+	jma us_dbuf_setsurface_i	; 0xF068 dbuf.asm
+	jma us_dbuf_getsurface_i	; 0xF06A dbuf.asm
 
 
 

@@ -178,4 +178,6 @@ us_dlist_db_clear	equ	0xF05E
 us_dbuf_addfliphook	equ	0xF060
 us_dbuf_remfliphook	equ	0xF062
 us_dbuf_addframehook	equ	0xF064
-us_dbuf_remframehook	equ	0xF068
+us_dbuf_remframehook	equ	0xF066
+us_dbuf_setsurface	equ	0xF068
+us_dbuf_getsurface	equ	0xF06A
