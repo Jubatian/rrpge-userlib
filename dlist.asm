@@ -23,24 +23,23 @@ us_dlist_setptr_i:
 .lcl	equ	0		; Display list column to use
 .psy	equ	1		; Y position
 .dld	equ	2		; Display List Definition
-.psh	equ	3		; Y position, high
 
-	mov sp,    8
+	mov sp,    7
 
 	; Save CPU regs
 
-	mov [$4],  a
-	mov [$5],  b
-	mov [$6],  d
-	mov [$7],  x0
+	mov [$3],  a
+	mov [$4],  b
+	mov [$5],  d
+	mov [$6],  x0
 
 	; Load display list size & prepare masks
 
 	mov a,     [$.dld]
 	and a,     3		; Display list entry size
-	not x0,    0x0003	; Loads 0xFFFC
-	shl x0,    a
-	and x0,    0x07FC	; Mask for display list offset
+	not d,     0x0003	; Loads 0xFFFC
+	shl d,     a
+	and d,     0x07FC	; Mask for display list offset
 	xbc [$.dld], 13		; Double scan?
 	add a,     1		; 0 / 1 / 2 / 3 / 4
 	add a,     7		; 0 => 4 * 32 bit entries etc.
@@ -48,19 +47,18 @@ us_dlist_setptr_i:
 	; Calculate bit offset within display list
 
 	shl c:[$.psy], a	; Bit add value for start offset by Y position
-	mov [$.psh], c
-	mov d,     [$.lcl]
-	shl d,     5		; Column (32 bit entry) to bit offset
-	add [$.psy], d		; No wrap for proper colum specifications
+	mov b,     c		; Y high in 'b'
+	mov c,     [$.lcl]
+	shl c,     5		; Column (32 bit entry) to bit offset
+	add [$.psy], c		; No wrap for proper colum specifications
 
 	; Calculate absolute display list offset
 
-	mov d,     [$.dld]
-	and d,     x0
+	and d,     [$.dld]	; Apply mask on display list def. into the mask
 	shl c:d,   14		; Bit offset of display list
 	mov x0,    c
 	add c:d,   [$.psy]
-	adc x0,    [$.psh]	; Start offset in x0:d acquired
+	adc x0,    b		; Start offset in x0:d acquired
 
 	; Prepare PRAM pointer fill. In 'c' prepares a zero for incr. high
 
@@ -84,14 +82,14 @@ us_dlist_setptr_i:
 	mov [x3],  b		; P3_IL
 	mov [x3],  a		; P3_DS
 
-	mov x3,    c		; Return value (display list size in bits)
+	mov x3,    b		; Return value (display list size in bits)
 
 	; Restore CPU regs & exit
 
-	mov a,     [$4]
-	mov b,     [$5]
-	mov d,     [$6]
-	mov x0,    [$7]
+	mov a,     [$3]
+	mov b,     [$4]
+	mov d,     [$5]
+	mov x0,    [$6]
 	rfn
 
 
