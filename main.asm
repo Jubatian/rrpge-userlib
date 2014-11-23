@@ -15,7 +15,6 @@ include "rrpge.asm"
 section code
 
 
-
 org 0xF000				; Bottom of entry table
 
 	jma us_ptr_set1i_i		; 0xF000 ptr.asm
@@ -75,6 +74,16 @@ org 0xF000				; Bottom of entry table
 	jma us_dbuf_remframehook_i	; 0xF066 dbuf.asm
 	jma us_dbuf_setsurface_i	; 0xF068 dbuf.asm
 	jma us_dbuf_getsurface_i	; 0xF06A dbuf.asm
+	jma us_sprite_reset_i		; 0xF06C sprite.asm
+	jma us_smux_reset_i		; 0xF06E sprite.asm
+	jma us_sprite_setbounds_i	; 0xF070 sprite.asm
+	jma us_smux_setbounds_i		; 0xF072 sprite.asm
+	jma us_sprite_add_i		; 0xF074 sprite.asm
+	jma us_smux_add_i		; 0xF076 sprite.asm
+	jma us_sprite_addxy_i		; 0xF078 sprite.asm
+	jma us_smux_addxy_i		; 0xF07A sprite.asm
+	jma us_sprite_addlist_i		; 0xF07C sprite.asm
+	jma us_smux_addlist_i		; 0xF07E sprite.asm
 
 
 
@@ -89,3 +98,5 @@ include "dbuf.asm"
 include "dlist_sb.asm"
 include "dlist_db.asm"
 include "dlist.asm"
+include "sprite.asm"
+include "smux.asm"

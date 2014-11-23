@@ -280,12 +280,12 @@ us_dbuf_remfliphook_i:
 	; incrementing mode (won't help much if it wasn't, either). Faster
 	; removal is possible using two pointers, but this is smaller.
 
-.rm:	mov c,     [x3]
+.lr:	mov c,     [x3]
 	sub x3,    2
 	mov [x3],  c
 	add x3,    1
-	xeq x3,    [us_dbuf_flpf]
-	jms .rm
+.rm:	xeq x3,    [us_dbuf_flpf]
+	jms .lr
 	sub x3,    1
 	mov [us_dbuf_flpf], x3
 
@@ -343,12 +343,12 @@ us_dbuf_remframehook_i:
 	; incrementing mode (won't help much if it wasn't, either). Faster
 	; removal is possible using two pointers, but this is smaller.
 
-.rm:	mov c,     [x3]
+.lr:	mov c,     [x3]
 	sub x3,    2
 	mov [x3],  c
 	add x3,    1
-	xeq x3,    [us_dbuf_fraf]
-	jms .rm
+.rm:	xeq x3,    [us_dbuf_fraf]
+	jms .lr
 	sub x3,    1
 	mov [us_dbuf_fraf], x3
 
