@@ -84,6 +84,14 @@ org 0xF000				; Bottom of entry table
 	jma us_smux_addxy_i		; 0xF07A sprite.asm
 	jma us_sprite_addlist_i		; 0xF07C sprite.asm
 	jma us_smux_addlist_i		; 0xF07E sprite.asm
+	jma us_sin_i			; 0xF080 math.asm
+	jma us_cos_i			; 0xF082 math.asm
+	jma us_sincos_i			; 0xF084 math.asm
+	jma us_tfreq_i			; 0xF086 math.asm
+	jma us_mul32_i			; 0xF088 math.asm
+	jma us_div32_i			; 0xF08A math.asm
+	jma us_rec16_i			; 0xF08C math.asm
+	jma us_rec32_i			; 0xF08E math.asm
 
 
 
@@ -100,3 +108,4 @@ include "dlist_db.asm"
 include "dlist.asm"
 include "sprite.asm"
 include "smux.asm"
+include "math.asm"

@@ -22,7 +22,7 @@ userlib.txt: userlib.bin genulib
 userlib.bin: app.rpa
 	tail app.rpa -c+123045 >userlib.bin
 
-app.rpa:
+app.rpa: *.asm
 	$(RRPGEASM);
 
 genulib.o: genulib.c
