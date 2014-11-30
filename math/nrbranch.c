@@ -1,12 +1,12 @@
 /**
-**  \file      Newton-Raphson divisor, branch set generator
-**  \brief     The main program file
+**  \file
+**  \brief     Newton-Raphson divisor, branch set generator
 **  \author    Sandor Zsuga (Jubatian)
 **  \copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
 **             License) extended as RRPGEvt (temporary version of the RRPGE
 **             License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 **             root.
-**  \date      2014.11.29
+**  \date      2014.11.30
 **
 **  Generates branch block for Newton-Raphson division, aiming for a maximal
 **  difference produced by the Newton-Raphson steps. The Newton-Raphson

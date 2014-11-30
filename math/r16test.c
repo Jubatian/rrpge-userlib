@@ -1,12 +1,12 @@
 /**
-**  \file      RRPGE User Library math component, 16 bit reciprocal test
-**  \brief     The main program file
+**  \file
+**  \brief     RRPGE User Library math component, 16 bit reciprocal test
 **  \author    Sandor Zsuga (Jubatian)
 **  \copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
 **             License) extended as RRPGEvt (temporary version of the RRPGE
 **             License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 **             root.
-**  \date      2014.11.29
+**  \date      2014.11.30
 **
 **  Tests the code designed for the RRPGE User Library's math component, the
 **  us_rec16 function.
