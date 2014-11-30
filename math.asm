@@ -724,3 +724,261 @@ us_rec32_i:
 	mov x0,    [$4]
 	mov x1,    [$5]
 	rfn
+
+
+
+;
+; Implementation of us_sqrt16
+;
+us_sqrt16_i:
+
+.inp	equ	0		; Input
+
+	; Set up, and calculate first 2 digit of square root
+
+	mov x3,    1
+	add c:[$.inp], x3	; Easier to compare this way
+	xeq c,     0
+	jms .ff			; However 0xFFFF needs special return
+
+	mov c,      [$.inp]
+	mov x3,     0
+	xug 0x4001, c
+	jms .l0			; [$.inp] >= 0x4000 (0x80 ^ 2)
+	xug 0x1001, c
+	bts x3,     6		; [$.inp] >= 0x1000 (0x40 ^ 2)
+	jms .st
+.l0:	bts x3,     7
+	xug 0x9001, c
+	bts x3,     6		; [$.inp] >= 0x9000 (0xC0 ^ 2)
+
+.st:	; The 13 further digits are calculated as follows:
+	; The digit of interest is set in the return (x3)
+	; It is raised to square (x3 ^ 2)
+	; Then (x3 ^ 2) > [$.inh]:[$.inl] (original input) is checked, if the
+	; check passes, the digit can not be set (so cleared back).
+	; [$.inh]:[$.inl] needed an increment so the check can be performed
+	; with a subtract which would give a ">=" relation by carry.
+
+	bts x3,    5
+	mov c,     x3
+	mul c,     c
+	xug [$.inp], c
+	btc x3,    5
+
+	bts x3,    4
+	mov c,     x3
+	mul c,     c
+	xug [$.inp], c
+	btc x3,    4
+
+	bts x3,    3
+	mov c,     x3
+	mul c,     c
+	xug [$.inp], c
+	btc x3,    3
+
+	bts x3,    2
+	mov c,     x3
+	mul c,     c
+	xug [$.inp], c
+	btc x3,    2
+
+	bts x3,    1
+	mov c,     x3
+	mul c,     c
+	xug [$.inp], c
+	btc x3,    1
+
+	bts x3,    0
+	mov c,     x3
+	mul c,     c
+	xug [$.inp], c
+	btc x3,    0
+
+	rfn
+
+.ff:	not x3,    0		; 0xFF return for max input
+	rfn
+
+
+
+;
+; Implementation of us_sqrt32
+;
+us_sqrt32_i:
+
+.inh	equ	0		; Input, high
+.inl	equ	1		; Input, low
+
+	mov sp,    4
+
+	; Save registers
+
+	mov [$2],  a
+	mov [$3],  b
+
+	; Set up, and calculate first 3 digits of square root
+
+	mov a,     [$.inh]	; Save for first comparisons
+	mov x3,    1
+	add c:[$.inl], x3
+	mov x3,    0		; Also initial return value
+	adc c:[$.inh], x3	; Easier to compare this way
+	xeq c,     0
+	jms .ffff		; However 0xFFFFFFFF needs special return
+
+	xug 0x4000, a
+	jms .l0			; [$.inh]:[$.inl] >= 0x40000000 (0x8000 ^ 2)
+	xug 0x1000, a
+	jms .l1			; [$.inh]:[$.inl] >= 0x10000000 (0x4000 ^ 2)
+	xug 0x0400, a
+	bts x3,    13		; [$.inh]:[$.inl] >= 0x04000000 (0x2000 ^ 2)
+	jms .st
+.l0:	bts x3,    15
+	xug 0x9000, a
+	jms .l2			; [$.inh]:[$.inl] >= 0x90000000 (0xC000 ^ 2)
+	xug 0x6400, a
+	bts x3,    13		; [$.inh]:[$.inl] >= 0x64000000 (0xA000 ^ 2)
+	jms .st
+.l1:	bts x3,    14
+	xug 0x2400, a
+	bts x3,    13		; [$.inh]:[$.inl] >= 0x24000000 (0x6000 ^ 2)
+	jms .st
+.l2:	bts x3,    14
+	xug 0xC400, a
+	bts x3,    13		; [$.inh]:[$.inl] >= 0xC4000000 (0xE000 ^ 2)
+
+.st:	; The 13 further digits are calculated as follows:
+	; The digit of interest is set in the return (x3)
+	; It is raised to square (x3 ^ 2)
+	; Then (x3 ^ 2) > [$.inh]:[$.inl] (original input) is checked, if the
+	; check passes, the digit can not be set (so cleared back).
+	; [$.inh]:[$.inl] needed an increment so the check can be performed
+	; with a subtract which would give a ">=" relation by carry.
+
+	bts x3,    12
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    12
+
+	bts x3,    11
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    11
+
+	bts x3,    10
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    10
+
+	bts x3,    9
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    9
+
+	bts x3,    8
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    8
+
+	bts x3,    7
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    7
+
+	bts x3,    6
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    6
+
+	bts x3,    5
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    5
+
+	bts x3,    4
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    4
+
+	bts x3,    3
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    3
+
+	bts x3,    2
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    2
+
+	bts x3,    1
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    1
+
+	bts x3,    0
+	mov a,     x3
+	mul c:a,   a
+	mov b,     c
+	sub c:a,   [$.inl]
+	sbc c:b,   [$.inh]
+	xne c,     0
+	btc x3,    0
+
+.exit:	; Restore regs & return
+
+	mov a,     [$2]
+	mov b,     [$3]
+	rfn
+
+.ffff:	not x3,    0		; 0xFFFF return for max input
+	jms .exit

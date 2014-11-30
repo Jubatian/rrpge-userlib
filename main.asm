@@ -92,6 +92,8 @@ org 0xF000				; Bottom of entry table
 	jma us_div32_i			; 0xF08A math.asm
 	jma us_rec16_i			; 0xF08C math.asm
 	jma us_rec32_i			; 0xF08E math.asm
+	jma us_sqrt16_i			; 0xF090 math.asm
+	jma us_sqrt32_i			; 0xF092 math.asm
 
 
 
