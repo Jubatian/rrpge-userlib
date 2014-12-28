@@ -13,12 +13,13 @@
 ; Uses the following CPU RAM locations:
 ; 0xFAFF: Current display buffer display list offset
 ; 0xFAFE: Current work buffer display list offset
-; 0xFAFD: Flip performed flag (indicates the need to call frame hooks)
-; 0xFAF0 - 0xFAFC: Page flip hooks (functions to call when flipping pages)
+; 0xFAF0 - 0xFAFD: Page flip hooks (functions to call when flipping pages)
 ; 0xFAEF: Absolute offset of first free slot in flip hooks
 ; 0xFAEE: Absolute offset of first free slot in frame hooks
 ; 0xFAE0 - 0xFAED: Frame end hooks (functions to call when frame ends)
-; 0xF990 - 0xF99F: Work & Display surface pairs
+; 0xFADE: Flip performed flag (indicates the need to call frame hooks)
+; 0xFADF: Absolute offset of first free slot in init hooks
+; 0xFAD0 - 0xFADD: Init hooks (functions to call when initializing)
 ;
 
 
@@ -33,11 +34,9 @@ section code
 us_dbuf_dl	equ	0xFAFF
 ; 0xFAEE: Current work buffer display list offset
 us_dbuf_wl	equ	0xFAFE
-; 0xFAFD: Flip performed flag (indicates the need to call frame hooks)
-us_dbuf_ff	equ	0xFAFD
-; 0xFAF0 - 0xFAFC: Page flip hooks (functions to call when flipping pages)
+; 0xFAF0 - 0xFAFD: Page flip hooks (functions to call when flipping pages)
 us_dbuf_flpa	equ	0xFAF0
-us_dbuf_flpe	equ	0xFAFD
+us_dbuf_flpe	equ	0xFAFE
 ; 0xFAEF: Absolute offset of first free slot in flip hooks
 us_dbuf_flpf	equ	0xFAEF
 ; 0xFAEE: Absolute offset of first free slot in frame hooks
@@ -45,9 +44,13 @@ us_dbuf_fraf	equ	0xFAEE
 ; 0xFAE0 - 0xFAED: Frame end hooks (functions to call when frame ends)
 us_dbuf_fraa	equ	0xFAE0
 us_dbuf_frae	equ	0xFAEE
-; 0xF990: Work & Display surface pairs (work high, display high, work low, display low)
-us_dbuf_sura	equ	0xF990
-us_dbuf_sure	equ	0xF9A0
+; 0xFADF: Absolute offset of first free slot in flip hooks
+us_dbuf_inif	equ	0xFADF
+; 0xFADE: Flip performed flag (indicates the need to call frame hooks)
+us_dbuf_ff	equ	0xFADE
+; 0xFAD0 - 0xFADD: Page flip hooks (functions to call when flipping pages)
+us_dbuf_inia	equ	0xFAD0
+us_dbuf_inie	equ	0xFADE
 
 
 
@@ -83,6 +86,11 @@ us_dbuf_i_framecall:
 
 	mov sp,    1
 
+	; Clear flip performed. Do it here so frame hooks which would call
+	; us_dbuf_getlist will work properly (no recursive deadlock).
+
+	btc [us_dbuf_ff], 0
+
 	; Call hooks
 
 	mov x3,    us_dbuf_fraa
@@ -94,9 +102,8 @@ us_dbuf_i_framecall:
 .ls:	xeq x3,    [us_dbuf_fraf]
 	jms .lp
 
-	; Clear flip performed, return
+	; Return
 
-	btc [us_dbuf_ff], 0
 	rfn
 
 
@@ -144,6 +151,17 @@ us_dbuf_init_i:
 	jfa us_dbuf_i_dlfix {[$.dl2]}
 	mov [us_dbuf_wl], x3
 
+	; Call init hooks
+
+	mov x3,    us_dbuf_inia
+	jms .ls
+.li:	mov c,     [x3]
+	mov [$0],  x3		; [$0] is no longer used (was [$.dl1])
+	jfa c			; Function may not restore c and x3
+	mov x3,    [$0]
+.ls:	xeq x3,    [us_dbuf_inif]
+	jms .li
+
 	; Call flip hooks
 
 	jfa us_dbuf_i_flipcall
@@ -187,17 +205,6 @@ us_dbuf_flip_i:
 	xch x3,    [us_dbuf_wl]
 	mov [P_GDG_DLDEF], x3
 	mov [us_dbuf_dl], x3
-
-	; Flip surfaces (X3 is in incrementing 16 bit mode)
-
-	mov x3,    us_dbuf_sura
-.ls:	mov c,     [x3]		; Load work surface element
-	xch c,     [x3]		; Swap display surface element with it
-	sub x3,    2
-	mov [x3],  c		; Store previous display surface element to the work element
-	add x3,    1
-	xeq x3,    us_dbuf_sure	; Swapped all?
-	jms .ls
 
 	; Call flip hooks, simply tail-transfer to it
 
@@ -265,14 +272,22 @@ us_dbuf_remfliphook_i:
 
 .flh	equ	0		; Flip hook function to remove
 
-	; Look for the function
+	; Save regs & set up
 
-	mov x3,    us_dbuf_flpa
+	mov sp,    2
 	mov c,     [$.flh]
-	jms .ls
+	mov [$0],  xm
+	mov [$1],  x2
+	mov xm2,   PTR16
+	mov x2,    us_dbuf_flpf
+	mov x3,    us_dbuf_flpa
+	jms .entr
+
+	; Common remove
+
 .lp:	xne c,     [x3]
 	jms .rm
-.ls:	xeq x3,    [us_dbuf_flpf]
+.entr:	xeq x3,    [x2]
 	jms .lp
 	jms .exit		; Nothing to remove
 
@@ -284,13 +299,15 @@ us_dbuf_remfliphook_i:
 	sub x3,    2
 	mov [x3],  c
 	add x3,    1
-.rm:	xeq x3,    [us_dbuf_flpf]
+.rm:	xeq x3,    [x2]
 	jms .lr
 	sub x3,    1
-	mov [us_dbuf_flpf], x3
+	mov [x2],  x3
 
 .exit:	; Done, removed if found, exit
 
+	mov xm,    [$0]
+	mov x2,    [$1]
 	rfn
 
 
@@ -328,92 +345,59 @@ us_dbuf_remframehook_i:
 
 .frh	equ	0		; Frame hook function to remove
 
-	; Look for the function
+	; Save regs & set up
 
-	mov x3,    us_dbuf_fraa
+	mov sp,    2
 	mov c,     [$.frh]
-	jms .ls
-.lp:	xne c,     [x3]
-	jms .rm
-.ls:	xeq x3,    [us_dbuf_fraf]
-	jms .lp
-	jms .exit		; Nothing to remove
+	mov [$0],  xm
+	mov [$1],  x2
+	mov xm2,   PTR16
+	mov x2,    us_dbuf_fraf
+	mov x3,    us_dbuf_fraa
+	jms us_dbuf_remfliphook_i.entr
 
-	; Remove by sliding the rest down one position. Note: x3 is in
-	; incrementing mode (won't help much if it wasn't, either). Faster
-	; removal is possible using two pointers, but this is smaller.
 
-.lr:	mov c,     [x3]
-	sub x3,    2
+
+;
+; Implementation of us_dbuf_addinithook
+;
+us_dbuf_addinithook_i:
+
+.inh	equ	0		; Frame hook function to add
+
+	; First attempt to remove it
+
+	jfa us_dbuf_reminithook_i {[$.inh]}
+
+	; Add it
+
+	mov x3,    [us_dbuf_inif]
+	xne x3,    us_dbuf_inie
+	jms .exit		; Full, can not add it
+	mov c,     [$.inh]
 	mov [x3],  c
-	add x3,    1
-.rm:	xeq x3,    [us_dbuf_fraf]
-	jms .lr
-	sub x3,    1
-	mov [us_dbuf_fraf], x3
+	mov [us_dbuf_inif], x3
 
-.exit:	; Done, removed if found, exit
+.exit:	; Done, added (or not added)
 
 	rfn
 
 
 
 ;
-; Implementation of us_dbuf_setsurface
+; Implementation of us_dbuf_reminithook
 ;
-us_dbuf_setsurface_i:
+us_dbuf_reminithook_i:
 
-.sid	equ	0		; Surface ID to set
-.dsh	equ	1		; Display surface, high
-.dsl	equ	2		; Display surface, low
-.wrh	equ	3		; Work surface, high
-.wrl	equ	4		; Work surface, low
+.inh	equ	0		; Frame hook function to remove
 
-	mov x3,    [$.sid]
-	and x3,    3		; Only 4 surfaces
-	shl x3,    2		; Offset of surface pair
-	add x3,    us_dbuf_sura
-	mov c,     [$.wrh]
-	mov [x3],  c
-	mov c,     [$.dsh]
-	mov [x3],  c
-	mov c,     [$.wrl]
-	mov [x3],  c
-	mov c,     [$.dsl]
-	mov [x3],  c
-	rfn
+	; Save regs & set up
 
-
-
-;
-; Implementation of us_dbuf_getsurface
-;
-us_dbuf_getsurface_i:
-
-.sid	equ	0		; Surface ID to get
-
-	; Optimized for fastest normal return path. This little function may
-	; be called many times.
-
-	; Frame hooks were called already?
-
-	xbc [us_dbuf_ff], 0
-	jms .lp			; If not, then wait and call them
-
-.exit:	; Return the current work surface
-
-	mov x3,    [$.sid]
-	and x3,    3		; Only 4 surfaces
-	shl x3,    2		; Offset of surface pair
-	add x3,    us_dbuf_sura
-	mov c,     [x3]		; Work surface, high
-	add x3,    1		; Skip display surface, high
-	mov x3,    [x3]		; Work surface, low
-	rfn
-
-	; Wait frame end, then call frame hooks
-
-.lp:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
-	jms .lp
-	jfa us_dbuf_i_framecall
-	jms .exit
+	mov sp,    2
+	mov c,     [$.inh]
+	mov [$0],  xm
+	mov [$1],  x2
+	mov xm2,   PTR16
+	mov x2,    us_dbuf_inif
+	mov x3,    us_dbuf_inia
+	jms us_dbuf_remfliphook_i.entr

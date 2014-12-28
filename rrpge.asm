@@ -108,6 +108,8 @@ kc_vid_setst3d		equ	0x0340
 kc_inp_getprops		equ	0x0410
 kc_inp_dropdev		equ	0x0411
 kc_inp_getdidesc	equ	0x0412
+kc_inp_getaidesc	equ	0x0413
+kc_inp_getname		equ	0x0414
 kc_inp_getdi		equ	0x0422
 kc_inp_getai		equ	0x0423
 kc_inp_popchar		equ	0x0424
@@ -179,8 +181,8 @@ us_dbuf_addfliphook	equ	0xF060
 us_dbuf_remfliphook	equ	0xF062
 us_dbuf_addframehook	equ	0xF064
 us_dbuf_remframehook	equ	0xF066
-us_dbuf_setsurface	equ	0xF068
-us_dbuf_getsurface	equ	0xF06A
+us_dbuf_addinithook	equ	0xF068
+us_dbuf_reminithook	equ	0xF06A
 us_sprite_reset		equ	0xF06C
 us_smux_reset		equ	0xF06E
 us_sprite_setbounds	equ	0xF070

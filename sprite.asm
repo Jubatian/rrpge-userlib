@@ -13,11 +13,11 @@
 ; clear the managed columns.
 ;
 ; Uses the following CPU RAM locations:
-; 0xFADC: Bit0: if clear, indicates the occupation data is dirty.
-; 0xFADB: First column to use.
-; 0xFADA: Count of columns to use.
-; 0xFAD9: Current first occupied column on the top.
-; 0xFAD8: Current first non-occupied column on the bottom.
+; 0xFACC: Bit0: if clear, indicates the occupation data is dirty.
+; 0xFACB: First column to use.
+; 0xFACA: Count of columns to use.
+; 0xFAC9: Current first occupied column on the top.
+; 0xFAC8: Current first non-occupied column on the bottom.
 ;
 ; Also adds a Page flip hook (to clear the occupation data).
 ;
@@ -28,16 +28,16 @@ section code
 
 
 
-; 0xFADC: Dirty flag on bit 0: clear if dirty.
-us_sprite_df	equ	0xFADC
-; 0xFADB: Column to start at
-us_sprite_cs	equ	0xFADB
-; 0xFADA: Count of columns
-us_sprite_cc	equ	0xFADA
-; 0xFAD9: Current top column
-us_sprite_pt	equ	0xFAD9
-; 0xFAD8: Current start column
-us_sprite_ps	equ	0xFAD8
+; 0xFACC: Dirty flag on bit 0: clear if dirty.
+us_sprite_df	equ	0xFACC
+; 0xFACB: Column to start at
+us_sprite_cs	equ	0xFACB
+; 0xFACA: Count of columns
+us_sprite_cc	equ	0xFACA
+; 0xFAC9: Current top column
+us_sprite_pt	equ	0xFAC9
+; 0xFAC8: Current start column
+us_sprite_ps	equ	0xFAC8
 
 
 
