@@ -2,6 +2,10 @@
 RRPGE User Library
 ==============================================================================
 
+.. image:: https://cdn.rawgit.com/Jubatian/rrpge-spec/00.013.002/logo_txt.svg
+   :align: center
+   :width: 100%
+
 :Author:    Sandor Zsuga (Jubatian)
 :Copyright: 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
             License) extended as RRPGEvt (temporary version of the RRPGE
@@ -22,6 +26,15 @@ RRPGE implementations.
 
 The specification of the functions to be provided by the RRPGE User Library
 are found on the specs/userlib path in the RRPGE System Specification.
+
+
+Related projects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- RRPGE Specification: https://www.github.com/Jubatian/rrpge-spec
+- RRPGE Assembler: https://www.github.com/Jubatian/rrpge-asm
+- RRPGE Emulator & Library: https://www.github.com/Jubatian/rrpge-libminimal
+- Example programs: https://www.github.com/Jubatian/rrpge-examples
 
 
 Temporary license notes
