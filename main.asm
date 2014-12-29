@@ -75,15 +75,15 @@ org 0xF000				; Bottom of entry table
 	jma us_dbuf_addinithook_i	; 0xF068 dbuf.asm
 	jma us_dbuf_reminithook_i	; 0xF06A dbuf.asm
 	jma us_sprite_reset_i		; 0xF06C sprite.asm
-	jma us_smux_reset_i		; 0xF06E sprite.asm
+	jma us_smux_reset_i		; 0xF06E smux.asm
 	jma us_sprite_setbounds_i	; 0xF070 sprite.asm
-	jma us_smux_setbounds_i		; 0xF072 sprite.asm
+	jma us_smux_setbounds_i		; 0xF072 smux.asm
 	jma us_sprite_add_i		; 0xF074 sprite.asm
-	jma us_smux_add_i		; 0xF076 sprite.asm
+	jma us_smux_add_i		; 0xF076 smux.asm
 	jma us_sprite_addxy_i		; 0xF078 sprite.asm
-	jma us_smux_addxy_i		; 0xF07A sprite.asm
+	jma us_smux_addxy_i		; 0xF07A smux.asm
 	jma us_sprite_addlist_i		; 0xF07C sprite.asm
-	jma us_smux_addlist_i		; 0xF07E sprite.asm
+	jma us_smux_addlist_i		; 0xF07E smux.asm
 	jma us_sin_i			; 0xF080 math.asm
 	jma us_cos_i			; 0xF082 math.asm
 	jma us_sincos_i			; 0xF084 math.asm
@@ -94,6 +94,15 @@ org 0xF000				; Bottom of entry table
 	jma us_rec32_i			; 0xF08E math.asm
 	jma us_sqrt16_i			; 0xF090 math.asm
 	jma us_sqrt32_i			; 0xF092 math.asm
+	jma us_dsurf_set_i		; 0xF094 dsurf.asm
+	jma us_dsurf_setdbuf_i		; 0xF096 dsurf.asm
+	jma us_dsurf_setm_i		; 0xF098 dsurf.asm
+	jma us_dsurf_setmdbuf_i		; 0xF09A dsurf.asm
+	jma us_dsurf_get_i		; 0xF09C dsurf.asm
+	jma us_dsurf_getacc_i		; 0xF09E dsurf.asm
+	jma us_dsurf_setaccpart_i	; 0xF0A0 dsurf.asm
+	jma us_dsurf_init_i		; 0xF0A2 dsurf.asm
+	jma us_dsurf_flip_i		; 0xF0A4 dsurf.asm
 
 
 
@@ -111,3 +120,4 @@ include "dlist.asm"
 include "sprite.asm"
 include "smux.asm"
 include "math.asm"
+include "dsurf.asm"

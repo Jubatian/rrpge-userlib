@@ -203,3 +203,18 @@ us_rec16		equ	0xF08C
 us_rec32		equ	0xF08E
 us_sqrt16		equ	0xF090
 us_sqrt32		equ	0xF092
+us_dsurf_set		equ	0xF094
+us_dsurf_setdbuf	equ	0xF096
+us_dsurf_setm		equ	0xF098
+us_dsurf_setmdbuf	equ	0xF09A
+us_dsurf_get		equ	0xF09C
+us_dsurf_getacc		equ	0xF09E
+us_dsurf_setaccpart	equ	0xF0A0
+us_dsurf_init		equ	0xF0A2
+us_dsurf_flip		equ	0xF0A4
+
+;
+; User Library locations (pointers)
+;
+
+up_dsurf		equ	0xFAC0
