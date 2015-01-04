@@ -103,6 +103,10 @@ org 0xF000				; Bottom of entry table
 	jma us_dsurf_setaccpart_i	; 0xF0A0 dsurf.asm
 	jma us_dsurf_init_i		; 0xF0A2 dsurf.asm
 	jma us_dsurf_flip_i		; 0xF0A4 dsurf.asm
+	jma us_tile_set_i		; 0xF0A6 tile.asm
+	jma us_tile_getacc_i		; 0xF0A8 tile.asm
+	jma us_tile_blit_i		; 0xF0AA tile.asm
+	jma us_tile_blitb_i		; 0xF0AC tile.asm
 
 
 
@@ -121,3 +125,4 @@ include "sprite.asm"
 include "smux.asm"
 include "math.asm"
 include "dsurf.asm"
+include "tile.asm"
