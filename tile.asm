@@ -93,11 +93,13 @@ us_tile_getacc_i:
 	mov x3,    0x8018
 	mov [P_GFIFO_ADDR], x3
 	mov [P_GFIFO_DATA], c	; 0x8018: Count of cells to blit, whole
-	mov c,     0
-	mov [P_GFIFO_DATA], c	; 0x8019: Count of cells to blit, fraction
 
 	mov x3,    [$.srp]
 	mov [$0],  c		; Save width for multiplier
+
+	mov c,     0
+	mov [P_GFIFO_DATA], c	; 0x8019: Count of cells to blit, fraction
+
 	mov c,     0x8017
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
@@ -127,14 +129,14 @@ us_tile_getacc_i:
 	mov x3,    c
 	and x3,    0x001F	; VBT, VCK, Pixel barrel rot; BB is zero, OK
 	mov [P_GFIFO_DATA], x3	; 0x8015: Blit control flags & src. barrel rot
+	mov [$0],  c
+	shr c,     8
+	bts c,     0		; AND mask lowest bit is always 1
 	mov x3,    c
-	or  c,     0x01FF	; AND mask lowest bit is always 1
-	xbs x3,    8
-	and c,     0xFF00	; Colorkey either 0x00 or mask depending on b8
-	mov x3,    c
-	shr x3,    8
-	and c,     x3		; Unless masked out, colorkey is AND mask
-	mov [P_GFIFO_DATA], c	; 0x8016: AND mask and Colorkey
+	shl x3,    8
+	xbc [$0],  8
+	or  x3,    c		; If bit8 was set, then colorkey is AND mask
+	mov [P_GFIFO_DATA], x3	; 0x8016: AND mask and Colorkey
 
 	rfn
 
