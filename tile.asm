@@ -272,3 +272,22 @@ us_tile_blitb_i:
 	mov [P_GFIFO_DATA], c	; 0x801D: Destination fraction
 
 	jms us_tile_blit_i.entr	; Transfer to normal blit
+
+
+
+;
+; Implementation of us_tile_getwh
+;
+us_tile_getwh_i:
+.srp	equ	0		; Source pointer
+
+	mov x3,    [$.srp]
+	mov c,     [x3]
+	mov x3,    c
+	shr x3,    9		; Width
+	xne x3,    0
+	bts x3,    7		; 0 => 128 cells
+	and c,     0x1FF	; Height
+	xne c,     0
+	bts c,     9		; 0 => 512 lines
+	rfn

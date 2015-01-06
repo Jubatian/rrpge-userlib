@@ -197,32 +197,48 @@ us_dsurf_getacc_i:
 
 	jfa us_dbuf_getlist_i	; Wait for frame end if necessary
 
-	mov x3,     [$.srp]
-	mov c,      0x8000
+	mov x3,    [$.srp]
+	mov c,     0x8000
 	mov [P_GFIFO_ADDR], c
-	mov c,      [x3]
+	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Write mask, high
-	mov c,      [x3]
+	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Write mask, low
 	xbs [us_dsurf_ff], 0
 	add x3,    1		; If clear, B is the work surface
-	mov c,      [x3]
+	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Destination bank select
 	add x3,    1
-	mov c,      [x3]
+	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Destination partition select
 	xbc [us_dsurf_ff], 0
 	add x3,    1		; Restore offset in 'x3'
-	mov c,      [x3]
+	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Destination width (post-add whole)
-	mov c,      0
+	mov c,     0
 	mov [P_GFIFO_DATA], c	; Destination width (post-add fraction)
-	mov c,      0x8014
+	mov c,     0x8014
 	mov [P_GFIFO_ADDR], c
-	mov c,      [x3]
-	or  c,      0xFF0F	; All other partitions are disabled
+	mov c,     [x3]
+	or  c,     0xFF0F	; All other partitions are disabled
 	mov [P_GFIFO_DATA], c	; Partitioning settings
 	jms us_dsurf_get_i.entr	; Tail-transfer for return value
+
+
+
+;
+; Implementation of us_dsurf_getwp
+;
+us_dsurf_getwp_i:
+.srp	equ	0		; Source pointer
+
+	mov x3,    [$.srp]
+	add x3,    6
+	mov c,     [x3]
+	mov x3,    [x3]
+	shr x3,    4
+	and x3,    0xF
+	rfn
 
 
 
@@ -233,15 +249,15 @@ us_dsurf_setaccpart_i:
 .srp	equ	0		; Source pointer
 .prt	equ	1		; Source partitioning settings
 
-	mov c,      0x8014
+	mov c,     0x8014
 	mov [P_GFIFO_ADDR], c
-	mov x3,     [$.srp]
-	add x3,     7
-	mov c,      [x3]
-	and c,      0x00F0	; Mask out all except destination partitioning
-	mov x3,     [$.prt]
-	and x3,     0xFF0F	; Mask out destination partitioning
-	or  c,      x3
+	mov x3,    [$.srp]
+	add x3,    7
+	mov c,     [x3]
+	and c,     0x00F0	; Mask out all except destination partitioning
+	mov x3,    [$.prt]
+	and x3,    0xFF0F	; Mask out destination partitioning
+	or  c,     x3
 	mov [P_GFIFO_DATA], c	; Set partitioning settings
 	rfn
 
