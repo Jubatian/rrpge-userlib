@@ -209,7 +209,7 @@ us_dsurf_setm		equ	0xF098
 us_dsurf_setmdbuf	equ	0xF09A
 us_dsurf_get		equ	0xF09C
 us_dsurf_getacc		equ	0xF09E
-us_dsurf_getwp		equ	0xF0A0
+us_dsurf_getpw		equ	0xF0A0
 us_dsurf_setaccpart	equ	0xF0A2
 us_dsurf_init		equ	0xF0A4
 us_dsurf_flip		equ	0xF0A6
@@ -217,7 +217,7 @@ us_tile_set		equ	0xF0A8
 us_tile_getacc		equ	0xF0AA
 us_tile_blit		equ	0xF0AC
 us_tile_blitb		equ	0xF0AE
-us_tile_getwh		equ	0xF0B0
+us_tile_gethw		equ	0xF0B0
 
 ;
 ; User Library locations (pointers)

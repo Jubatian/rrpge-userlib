@@ -229,7 +229,7 @@ us_dsurf_getacc_i:
 ;
 ; Implementation of us_dsurf_getwp
 ;
-us_dsurf_getwp_i:
+us_dsurf_getpw_i:
 .srp	equ	0		; Source pointer
 
 	mov x3,    [$.srp]
@@ -238,6 +238,7 @@ us_dsurf_getwp_i:
 	mov x3,    [x3]
 	shr x3,    4
 	and x3,    0xF
+	xch c,     x3
 	rfn
 
 

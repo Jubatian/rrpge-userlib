@@ -278,7 +278,7 @@ us_tile_blitb_i:
 ;
 ; Implementation of us_tile_getwh
 ;
-us_tile_getwh_i:
+us_tile_gethw_i:
 .srp	equ	0		; Source pointer
 
 	mov x3,    [$.srp]
