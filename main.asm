@@ -109,6 +109,17 @@ org 0xF000				; Bottom of entry table
 	jma us_tile_blit_i		; 0xF0AC tile.asm
 	jma us_tile_blitb_i		; 0xF0AE tile.asm
 	jma us_tile_gethw_i		; 0xF0B0 tile.asm
+	jma us_tmap_set_i		; 0xF0B2 tmap.asm
+	jma us_tmap_setfn_i		; 0xF0B4 tmap.asm
+	jma us_tmap_getacc_i		; 0xF0B6 tmap.asm
+	jma us_tmap_getaccxy_i		; 0xF0B8 tmap.asm
+	jma us_tmap_getaccxfy_i		; 0xF0BA tmap.asm
+	jma us_tmap_blit_i		; 0xF0BC tmap.asm
+	jma us_tmap_gethw_i		; 0xF0BE tmap.asm
+	jma us_tmap_gettilehw_i		; 0xF0C0 tmap.asm
+	jma us_tmap_gettile_i		; 0xF0C2 tmap.asm
+	jma us_tmap_settile_i		; 0xF0C4 tmap.asm
+	jma us_tmap_setptr_i		; 0xF0C6 tmap.asm
 
 
 
@@ -128,3 +139,4 @@ include "smux.asm"
 include "math.asm"
 include "dsurf.asm"
 include "tile.asm"
+include "tmap.asm"
