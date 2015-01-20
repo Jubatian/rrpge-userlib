@@ -269,7 +269,7 @@ us_dsurf_setaccpart_i:
 ;
 us_dsurf_init_i:
 
-	btc [us_dsurf_ff], 1
+	bts [us_dsurf_ff], 0
 	rfn
 
 
