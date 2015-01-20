@@ -135,9 +135,9 @@ us_cos_i:
 
 	xne c,     0
 	jms .fast		; "Whole" angles from the table
-	xne x3,    0x100
+	xne x3,    0xFF00
 	jms .crzn		; Zero => Negative crossover
-	xne x3,    0x1FF
+	xne x3,    0xFFFF
 	jms .crnz		; Negative => Zero crossover
 
 	; Do a normal linear interpolation between 2 points
@@ -182,7 +182,6 @@ us_sincos_i:
 
 	jfa us_cos_i {[$.ang]}
 	xch [$.ang], x3
-	add x3,    0x4000
 	jfa us_sin_i {x3}
 	mov c,     [$.ang]
 	rfn
