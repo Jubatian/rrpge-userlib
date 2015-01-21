@@ -195,7 +195,9 @@ us_dbuf_flip_i:
 
 	; Wait for the Graphics FIFO to drain
 
-.lp:	xbc [P_GFIFO_STAT], 0	; FIFO is non-empty or peripheral is working
+	jms .lpe
+.lp:	jsv {kc_dly_delay, 5000}
+.lpe:	xbc [P_GFIFO_STAT], 0	; FIFO is non-empty or peripheral is working
 	jms .lp
 
 	; Flip buffers. The display list which becomes the work buffer is also
@@ -223,7 +225,7 @@ us_dbuf_getlist_i:
 	; Frame hooks were called already?
 
 	xbc [us_dbuf_ff], 0
-	jms .lp			; If not, then wait and call them
+	jms .lpe		; If not, then wait and call them
 
 .exit:	; Return the current work display list
 
@@ -232,7 +234,8 @@ us_dbuf_getlist_i:
 
 	; Wait frame end, then call frame hooks
 
-.lp:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
+.lp:	jsv {kc_dly_delay, 5000}
+.lpe:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
 	jms .lp
 	jfa us_dbuf_i_framecall
 	jms .exit
