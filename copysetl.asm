@@ -39,7 +39,7 @@ us_copy_pfp_l_i:
 	xne [$.lnh], c
 	jms .le			; If no high part, then finish up
 	mov x3,    0xFFF0
-	jfa us_copy_pfp {[$.tgh], [$.tgl], [$.srh], [$.srl], x3}
+	jfa us_copy_pfp_i {[$.tgh], [$.tgl], [$.srh], [$.srl], x3}
 	add c:[$.tgl], x3
 	add [$.tgh], c
 	add c:[$.srl], x3
@@ -52,7 +52,7 @@ us_copy_pfp_l_i:
 
 	mov c,     [$.lnl]
 	mov [$.lnh], c
-	jms us_copy_pfp
+	jms us_copy_pfp_i
 
 
 
@@ -73,7 +73,7 @@ us_set_p_l_i:
 	xne [$.lnh], c
 	jms .le			; If no high part, then finish up
 	mov x3,    0xFFF0
-	jfa us_set_p {[$.tgh], [$.tgl], [$.src], x3}
+	jfa us_set_p_i {[$.tgh], [$.tgl], [$.src], x3}
 	add c:[$.tgl], x3
 	add [$.tgh], c
 	sub c:[$.lnl], x3
@@ -84,4 +84,4 @@ us_set_p_l_i:
 
 	mov c,     [$.lnl]
 	mov [$.lnh], c
-	jms us_set_p
+	jms us_set_p_i
