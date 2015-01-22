@@ -120,6 +120,12 @@ org 0xF000				; Bottom of entry table
 	jma us_tmap_gettile_i		; 0xF0C2 tmap.asm
 	jma us_tmap_settile_i		; 0xF0C4 tmap.asm
 	jma us_tmap_setptr_i		; 0xF0C6 tmap.asm
+	jma us_fastmap_set_i		; 0xF0C8 fastmap.asm
+	jma us_fastmap_mark_i		; 0xF0CA fastmap.asm
+	jma us_fastmap_gethw_i		; 0xF0CC fastmap.asm
+	jma us_fastmap_getyx_i		; 0xF0CE fastmap.asm
+	jma us_fastmap_setdly_i		; 0xF0D0 fastmap.asm
+	jma us_fastmap_draw_i		; 0xF0D2 fastmap.asm
 
 
 
@@ -140,3 +146,4 @@ include "math.asm"
 include "dsurf.asm"
 include "tile.asm"
 include "tmap.asm"
+include "fastmap.asm"
