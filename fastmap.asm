@@ -550,8 +550,7 @@ us_fastmap_draw_i:
 	; parameters => nothing drawn due to skipping display list fill).
 
 	mov c,     0		; Some zero checks
-	xne c,     [$.dcu]
-	jms .exit		; Invalid column select
+	xeq c,     [$.dcu]	; Invalid column select check
 	xne c,     [$.slr]
 	jms .exit		; No source line select range
 	mov x3,    [$.dld]
@@ -572,8 +571,7 @@ us_fastmap_draw_i:
 	add x3,    1
 	xug x3,    c
 	jms .exit		; Y start + Used rows exceed max height
-	xbc [$.sls], 15
-	jms .exit		; Invalid source line select value start
+	xbs [$.sls], 15		; Invalid source line select value start check
 	xbc [$.slr], 15
 	jms .exit		; Too large source line select range
 	mov c,     [$.sls]
