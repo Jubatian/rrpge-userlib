@@ -101,7 +101,8 @@ org 0xE000				; Bottom of entry table
 	jma us_dsurf_get_i		; 0xE09C dsurf.asm
 	jma us_dsurf_getacc_i		; 0xE09E dsurf.asm
 	jma us_dsurf_getpw_i		; 0xE0A0 dsurf.asm
-	jma us_dsurf_setaccpart_i	; 0xE0A2 dsurf.asm
+	nop				; 0xE0A2
+	nop
 	jma us_dsurf_init_i		; 0xE0A4 dsurf.asm
 	jma us_dsurf_flip_i		; 0xE0A6 dsurf.asm
 	jma us_tile_set_i		; 0xE0A8 tile.asm

@@ -210,7 +210,6 @@ us_dsurf_setmdbuf	equ	0xE09A
 us_dsurf_get		equ	0xE09C
 us_dsurf_getacc		equ	0xE09E
 us_dsurf_getpw		equ	0xE0A0
-us_dsurf_setaccpart	equ	0xE0A2
 us_dsurf_init		equ	0xE0A4
 us_dsurf_flip		equ	0xE0A6
 us_tile_set		equ	0xE0A8

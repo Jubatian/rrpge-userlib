@@ -54,6 +54,9 @@ us_dsurf_set_i:
 	not c,     0		; Load 0xFFFF for masks
 	mov [x3],  c
 	mov [x3],  c		; Mask high & low
+	mov c,     [$.psz]
+	shl c,     12		; To dest. partition
+	mov [x3],  c		; Partition size
 	mov c,     [$.bnk]
 	mov [x3],  c
 	mov [x3],  c		; Surface A & B bank select
@@ -62,9 +65,6 @@ us_dsurf_set_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	mov c,     [$.psz]
-	shl c,     4		; To dest. partition
-	mov [x3],  c		; Partition size
 	rfn
 
 
@@ -85,6 +85,9 @@ us_dsurf_setdbuf_i:
 	not c,     0		; Load 0xFFFF for masks
 	mov [x3],  c
 	mov [x3],  c		; Mask high & low
+	mov c,     [$.psz]
+	shl c,     12		; To dest. partition
+	mov [x3],  c		; Partition size
 	mov c,     [$.bna]
 	mov [x3],  c
 	mov c,     [$.bnb]
@@ -95,9 +98,6 @@ us_dsurf_setdbuf_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	mov c,     [$.psz]
-	shl c,     4		; To dest. partition
-	mov [x3],  c		; Partition size
 	rfn
 
 
@@ -119,6 +119,9 @@ us_dsurf_setm_i:
 	mov [x3],  c
 	mov c,     [$.msl]
 	mov [x3],  c		; Mask high & low
+	mov c,     [$.psz]
+	shl c,     12		; To dest. partition
+	mov [x3],  c		; Partition size
 	mov c,     [$.bnk]
 	mov [x3],  c
 	mov [x3],  c		; Surface A & B bank select
@@ -127,9 +130,6 @@ us_dsurf_setm_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	mov c,     [$.psz]
-	shl c,     4		; To dest. partition
-	mov [x3],  c		; Partition size
 	rfn
 
 
@@ -153,6 +153,9 @@ us_dsurf_setmdbuf_i:
 	mov [x3],  c
 	mov c,     [$.msl]
 	mov [x3],  c		; Mask high & low
+	mov c,     [$.psz]
+	shl c,     12		; To dest. partition
+	mov [x3],  c		; Partition size
 	mov c,     [$.bna]
 	mov [x3],  c
 	mov c,     [$.bnb]
@@ -163,9 +166,6 @@ us_dsurf_setmdbuf_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	mov c,     [$.psz]
-	shl c,     4		; To dest. partition
-	mov [x3],  c		; Partition size
 	rfn
 
 
@@ -181,7 +181,7 @@ us_dsurf_get_i:
 .entr:	mov x3,    [$.srp]
 	xbs [us_dsurf_ff], 0
 	add x3,    1		; If clear, B is the work surface
-	add x3,    2		; Selects A or B bank select
+	add x3,    3		; Selects A or B bank select
 	mov c,     [x3]		; Bank
 	add x3,    1
 	mov x3,    [x3]		; Partition
@@ -204,10 +204,11 @@ us_dsurf_getacc_i:
 	mov [P_GFIFO_DATA], c	; Write mask, high
 	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Write mask, low
+	mov c,     [x3]		; Load partitioning setting
 	xbs [us_dsurf_ff], 0
 	add x3,    1		; If clear, B is the work surface
-	mov c,     [x3]
-	mov [P_GFIFO_DATA], c	; Destination bank select
+	or  c,     [x3]
+	mov [P_GFIFO_DATA], c	; Destination bank select & Partition size
 	add x3,    1
 	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Destination partition select
@@ -217,11 +218,6 @@ us_dsurf_getacc_i:
 	mov [P_GFIFO_DATA], c	; Destination width (post-add whole)
 	mov c,     0
 	mov [P_GFIFO_DATA], c	; Destination width (post-add fraction)
-	mov c,     0x8014
-	mov [P_GFIFO_ADDR], c
-	mov c,     [x3]
-	or  c,     0xFF0F	; All other partitions are disabled
-	mov [P_GFIFO_DATA], c	; Partitioning settings
 	jms us_dsurf_get_i.entr	; Tail-transfer for return value
 
 
@@ -233,33 +229,12 @@ us_dsurf_getpw_i:
 .srp	equ	0		; Source pointer
 
 	mov x3,    [$.srp]
-	add x3,    6
-	mov c,     [x3]
-	mov x3,    [x3]
-	shr x3,    4
-	and x3,    0xF
-	xch c,     x3
-	rfn
-
-
-
-;
-; Implementation of us_dsurf_setaccpart
-;
-us_dsurf_setaccpart_i:
-.srp	equ	0		; Source pointer
-.prt	equ	1		; Source partitioning settings
-
-	mov c,     0x8014
-	mov [P_GFIFO_ADDR], c
-	mov x3,    [$.srp]
 	add x3,    7
 	mov c,     [x3]
-	and c,     0x00F0	; Mask out all except destination partitioning
-	mov x3,    [$.prt]
-	and x3,    0xFF0F	; Mask out destination partitioning
-	or  c,     x3
-	mov [P_GFIFO_DATA], c	; Set partitioning settings
+	sub x3,    6
+	mov x3,    [x3]
+	shr x3,    12
+	xch c,     x3
 	rfn
 
 

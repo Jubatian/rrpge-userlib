@@ -117,6 +117,8 @@ us_tile_getacc_i:
 	mov [P_GFIFO_DATA], c	; 0x8012: Source bank select
 	mov c,     0		; No partitioning on source
 	mov [P_GFIFO_DATA], c	; 0x8013: Source partition select
+	mov c,     0xFF00
+	mov [P_GFIFO_DATA], c	; 0x8014: Source partitioning settings
 	mov c,     [x3]
 	mov [us_tile_moff], c
 	mov c,     [x3]
@@ -124,8 +126,6 @@ us_tile_getacc_i:
 	shr x3,    5
 	mov [us_tile_mtil], x3	; Tile index layout on low 3 bits
 
-	mov x3,    0x8015
-	mov [P_GFIFO_ADDR], x3
 	mov x3,    c
 	and x3,    0x001F	; VBT, VCK, Pixel barrel rot; BB is zero, OK
 	mov [P_GFIFO_DATA], x3	; 0x8015: Blit control flags & src. barrel rot
