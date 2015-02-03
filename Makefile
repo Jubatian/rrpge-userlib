@@ -20,7 +20,7 @@ userlib.txt: userlib.bin genulib
 	./genulib <userlib.bin >userlib.txt
 
 userlib.bin: app.rpa
-	tail app.rpa -c+123045 >userlib.bin
+	tail app.rpa -c+114853 >userlib.bin
 
 app.rpa: *.asm
 	$(RRPGEASM);
