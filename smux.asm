@@ -541,7 +541,7 @@ us_smux_addlist_i:
 	; Set up PRAM pointers
 
 	jfa us_smux_setptr_i {[$.psy], [$.dld]}
-	jfa us_ptr_set16i_i {2, [$.clh], [$.cll]}
+	jfa us_ptr_setwi_i {2, [$.clh], [$.cll]}
 
 	; Set up X0 and X1 for pointing into the occupation data
 

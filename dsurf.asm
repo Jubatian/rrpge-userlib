@@ -43,7 +43,7 @@ us_dsurf_defs	equ	0xFAC0
 ;
 ; Implementation of us_dsurf_set
 ;
-us_dsurf_set_i:
+us_dsurf_new_i:
 .tgp	equ	0		; Target pointer
 .bnk	equ	1		; Bank select for A & B
 .prt	equ	2		; Partition select for A & B
@@ -72,7 +72,7 @@ us_dsurf_set_i:
 ;
 ; Implementation of us_dsurf_setdbuf
 ;
-us_dsurf_setdbuf_i:
+us_dsurf_newdbuf_i:
 .tgp	equ	0		; Target pointer
 .bna	equ	1		; Bank select for A
 .pra	equ	2		; Partition select for A
@@ -105,7 +105,7 @@ us_dsurf_setdbuf_i:
 ;
 ; Implementation of us_dsurf_setm
 ;
-us_dsurf_setm_i:
+us_dsurf_newm_i:
 .tgp	equ	0		; Target pointer
 .msh	equ	1		; Mask, high
 .msl	equ	2		; Mask, low
@@ -137,7 +137,7 @@ us_dsurf_setm_i:
 ;
 ; Implementation of us_dsurf_setmdbuf
 ;
-us_dsurf_setmdbuf_i:
+us_dsurf_newmdbuf_i:
 .tgp	equ	0		; Target pointer
 .msh	equ	1		; Mask, high
 .msl	equ	2		; Mask, low

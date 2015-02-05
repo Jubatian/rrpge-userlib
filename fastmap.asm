@@ -54,7 +54,7 @@ section code
 ;
 ; Implementation of us_fastmap_set
 ;
-us_fastmap_set_i:
+us_fastmap_new_i:
 .fmp	equ	0		; Fast map structure pointer
 .tms	equ	1		; Tilemap structure pointer
 .dss	equ	2		; Destination surface structure pointer

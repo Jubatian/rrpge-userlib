@@ -56,9 +56,9 @@ us_ptr_setgen_i:
 
 
 ;
-; Implementation of us_ptr_setgen16i
+; Implementation of us_ptr_setgenwi
 ;
-us_ptr_setgen16i_i:
+us_ptr_setgenwi_i:
 
 .ptr	equ	0		; Target pointer
 .adh	equ	1		; Start bit address, high
@@ -70,7 +70,7 @@ us_ptr_setgen16i_i:
 
 	mov x3,    0x4		; Data unit size: 16 bits
 
-.en16:	; Entry point for us_ptr_setgen16w_i
+.enw:	; Entry point for us_ptr_setgenww_i
 
 	; Load word address components, saving registers
 
@@ -113,9 +113,9 @@ us_ptr_setgen16i_i:
 
 
 ;
-; Implementation of us_ptr_setgen16w
+; Implementation of us_ptr_setgenww
 ;
-us_ptr_setgen16w_i:
+us_ptr_setgenww_i:
 
 .ptr	equ	0		; Target pointer
 .adh	equ	1		; Start bit address, high
@@ -126,14 +126,14 @@ us_ptr_setgen16w_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0xC		; Data unit size: 16 bits, increment on write only
-	jms us_ptr_setgen16i_i.en16
+	jms us_ptr_setgenwi_i.enw
 
 
 
 ;
-; Implementation of us_ptr_set16i
+; Implementation of us_ptr_setwi
 ;
-us_ptr_set16i_i:
+us_ptr_setwi_i:
 
 .ptr	equ	0		; Target pointer
 .adh	equ	1		; Start word address, high
@@ -143,7 +143,7 @@ us_ptr_set16i_i:
 
 	mov x3,    0x4		; Data unit size: 16 bits
 
-.en16:	; Entry point for us_ptr_set16w_i
+.enw:	; Entry point for us_ptr_setww_i
 
 	; Load word address components, saving registers 'a' and 'b'
 
@@ -152,7 +152,7 @@ us_ptr_set16i_i:
 	shl c:b,   4
 	slc a,     4		; Calculate bit offset
 
-.entr:	; Entry point for us_ptr_set8i_i
+.entr:	; Entry point for us_ptr_set16i_i
 
 	; Calculate pointer register start offset
 
@@ -187,9 +187,9 @@ us_ptr_set16i_i:
 
 
 ;
-; Implementation of us_ptr_set16w
+; Implementation of us_ptr_setww
 ;
-us_ptr_set16w_i:
+us_ptr_setww_i:
 
 .ptr	equ	0		; Target pointer
 .adh	equ	1		; Start word address, high
@@ -198,7 +198,46 @@ us_ptr_set16w_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0xC		; Data unit size: 16 bits, increment on write only
-	jms us_ptr_set16i_i.en16
+	jms us_ptr_setwi_i.enw
+
+
+
+;
+; Implementation of us_ptr_set16i
+;
+us_ptr_set16i_i:
+
+.ptr	equ	0		; Target pointer
+.adh	equ	1		; Start bit address, high
+.adl	equ	2		; Start bit address, low
+
+	; Prepare data unit size in x3
+
+	mov x3,    0x4		; Data unit size: 16 bits
+
+.entr:  ; Entry point for all other routines
+
+	; Load address & save registers, then pass over
+
+	xch a,     [$.adh]
+	xch b,     [$.adl]
+	jms us_ptr_setwi_i.entr
+
+
+
+;
+; Implementation of us_ptr_set16w
+;
+us_ptr_set16w_i:
+
+.ptr	equ	0		; Target pointer
+.adh	equ	1		; Start bit address, high
+.adl	equ	2		; Start bit address, low
+
+	; Prepare data unit size in x3 & pass over
+
+	mov x3,    0xC		; Data unit size: 16 bits, increment on write only
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -211,16 +250,9 @@ us_ptr_set8i_i:
 .adh	equ	1		; Start bit address, high
 .adl	equ	2		; Start bit address, low
 
-	; Prepare data unit size in x3
+	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0x3		; Data unit size: 8 bits
-
-.entr:  ; Entry point for all other routines
-
-	; Load address & save registers, then pass over
-
-	xch a,     [$.adh]
-	xch b,     [$.adl]
 	jms us_ptr_set16i_i.entr
 
 
@@ -237,7 +269,7 @@ us_ptr_set8w_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0xB		; Data unit size: 8 bits, increment on write only
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -253,7 +285,7 @@ us_ptr_set4i_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0x2		; Data unit size: 4 bits
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -269,7 +301,7 @@ us_ptr_set4w_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0xA		; Data unit size: 4 bits, increment on write only
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -285,7 +317,7 @@ us_ptr_set2i_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0x1		; Data unit size: 2 bits
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -301,7 +333,7 @@ us_ptr_set2w_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0x9		; Data unit size: 2 bits, increment on write only
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -317,7 +349,7 @@ us_ptr_set1i_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0x0		; Data unit size: 1 bit
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr
 
 
 
@@ -333,4 +365,4 @@ us_ptr_set1w_i:
 	; Prepare data unit size in x3 & pass over
 
 	mov x3,    0x8		; Data unit size: 1 bit, increment on write only
-	jms us_ptr_set8i_i.entr
+	jms us_ptr_set16i_i.entr

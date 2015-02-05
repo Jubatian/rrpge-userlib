@@ -27,12 +27,10 @@ org 0xE000				; Bottom of entry table
 	jma us_ptr_set8w_i		; 0xE00E ptr.asm
 	jma us_ptr_set16i_i		; 0xE010 ptr.asm
 	jma us_ptr_set16w_i		; 0xE012 ptr.asm
-	nop				; 0xE014
-	nop
-	nop				; 0xE016
-	nop
-	jma us_ptr_setgen16i_i		; 0xE018 ptr.asm
-	jma us_ptr_setgen16w_i		; 0xE01A ptr.asm
+	jma us_ptr_setwi_i		; 0xE014 ptr.asm
+	jma us_ptr_setww_i		; 0xE016 ptr.asm
+	jma us_ptr_setgenwi_i		; 0xE018 ptr.asm
+	jma us_ptr_setgenww_i		; 0xE01A ptr.asm
 	jma us_ptr_setgen_i		; 0xE01C ptr.asm
 	nop				; 0xE01E
 	nop
@@ -94,10 +92,10 @@ org 0xE000				; Bottom of entry table
 	jma us_rec32_i			; 0xE08E math.asm
 	jma us_sqrt16_i			; 0xE090 math.asm
 	jma us_sqrt32_i			; 0xE092 math.asm
-	jma us_dsurf_set_i		; 0xE094 dsurf.asm
-	jma us_dsurf_setdbuf_i		; 0xE096 dsurf.asm
-	jma us_dsurf_setm_i		; 0xE098 dsurf.asm
-	jma us_dsurf_setmdbuf_i		; 0xE09A dsurf.asm
+	jma us_dsurf_new_i		; 0xE094 dsurf.asm
+	jma us_dsurf_newdbuf_i		; 0xE096 dsurf.asm
+	jma us_dsurf_newm_i		; 0xE098 dsurf.asm
+	jma us_dsurf_newmdbuf_i		; 0xE09A dsurf.asm
 	jma us_dsurf_get_i		; 0xE09C dsurf.asm
 	jma us_dsurf_getacc_i		; 0xE09E dsurf.asm
 	jma us_dsurf_getpw_i		; 0xE0A0 dsurf.asm
@@ -121,7 +119,7 @@ org 0xE000				; Bottom of entry table
 	jma us_tmap_gettile_i		; 0xE0C4 tmap.asm
 	jma us_tmap_settile_i		; 0xE0C6 tmap.asm
 	jma us_tmap_setptr_i		; 0xE0C8 tmap.asm
-	jma us_fastmap_set_i		; 0xE0CA fastmap.asm
+	jma us_fastmap_new_i		; 0xE0CA fastmap.asm
 	jma us_fastmap_mark_i		; 0xE0CC fastmap.asm
 	jma us_fastmap_gethw_i		; 0xE0CE fastmap.asm
 	jma us_fastmap_getyx_i		; 0xE0D0 fastmap.asm

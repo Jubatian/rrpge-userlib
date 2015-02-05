@@ -400,7 +400,7 @@ us_dlist_addlist_i:
 	; Set up PRAM pointers
 
 	jfa us_dlist_setptr_i {[$.lcl], [$.psy], [$.dld]}
-	jfa us_ptr_set16i_i {1, [$.clh], [$.cll]}
+	jfa us_ptr_setwi_i {1, [$.clh], [$.cll]}
 
 	; Add new graphics element to each line.
 
