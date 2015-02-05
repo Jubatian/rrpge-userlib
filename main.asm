@@ -101,32 +101,32 @@ org 0xE000				; Bottom of entry table
 	jma us_dsurf_get_i		; 0xE09C dsurf.asm
 	jma us_dsurf_getacc_i		; 0xE09E dsurf.asm
 	jma us_dsurf_getpw_i		; 0xE0A0 dsurf.asm
-	nop				; 0xE0A2
-	nop
-	jma us_dsurf_init_i		; 0xE0A4 dsurf.asm
-	jma us_dsurf_flip_i		; 0xE0A6 dsurf.asm
-	jma us_tile_set_i		; 0xE0A8 tile.asm
-	jma us_tile_getacc_i		; 0xE0AA tile.asm
-	jma us_tile_blit_i		; 0xE0AC tile.asm
-	jma us_tile_blitb_i		; 0xE0AE tile.asm
-	jma us_tile_gethw_i		; 0xE0B0 tile.asm
-	jma us_tmap_set_i		; 0xE0B2 tmap.asm
-	jma us_tmap_setfn_i		; 0xE0B4 tmap.asm
-	jma us_tmap_getacc_i		; 0xE0B6 tmap.asm
-	jma us_tmap_getaccxy_i		; 0xE0B8 tmap.asm
-	jma us_tmap_getaccxfy_i		; 0xE0BA tmap.asm
-	jma us_tmap_blit_i		; 0xE0BC tmap.asm
-	jma us_tmap_gethw_i		; 0xE0BE tmap.asm
-	jma us_tmap_gettilehw_i		; 0xE0C0 tmap.asm
-	jma us_tmap_gettile_i		; 0xE0C2 tmap.asm
-	jma us_tmap_settile_i		; 0xE0C4 tmap.asm
-	jma us_tmap_setptr_i		; 0xE0C6 tmap.asm
-	jma us_fastmap_set_i		; 0xE0C8 fastmap.asm
-	jma us_fastmap_mark_i		; 0xE0CA fastmap.asm
-	jma us_fastmap_gethw_i		; 0xE0CC fastmap.asm
-	jma us_fastmap_getyx_i		; 0xE0CE fastmap.asm
-	jma us_fastmap_setdly_i		; 0xE0D0 fastmap.asm
-	jma us_fastmap_draw_i		; 0xE0D2 fastmap.asm
+	jma us_dsurf_init_i		; 0xE0A2 dsurf.asm
+	jma us_dsurf_flip_i		; 0xE0A4 dsurf.asm
+	jma us_tile_new_i		; 0xE0A6 iftile.asm
+	jma us_tile_acc_i		; 0xE0A8 iftile.asm
+	jma us_tile_blit_i		; 0xE0AA iftile.asm
+	jma us_tile_gethw_i		; 0xE0AC iftile.asm
+	jma us_btile_new_i		; 0xE0AE btile.asm
+	jma us_btile_acc_i		; 0xE0B0 btile.asm
+	jma us_btile_blit_i		; 0xE0B2 btile.asm
+	jma us_btile_gethw_i		; 0xE0B4 btile.asm
+	jma us_tmap_new_i		; 0xE0B6 tmap.asm
+	jma us_tmap_acc_i		; 0xE0B8 tmap.asm
+	jma us_tmap_accxy_i		; 0xE0BA tmap.asm
+	jma us_tmap_accxfy_i		; 0xE0BC tmap.asm
+	jma us_tmap_blit_i		; 0xE0BE tmap.asm
+	jma us_tmap_gethw_i		; 0xE0C0 tmap.asm
+	jma us_tmap_gettilehw_i		; 0xE0C2 tmap.asm
+	jma us_tmap_gettile_i		; 0xE0C4 tmap.asm
+	jma us_tmap_settile_i		; 0xE0C6 tmap.asm
+	jma us_tmap_setptr_i		; 0xE0C8 tmap.asm
+	jma us_fastmap_set_i		; 0xE0CA fastmap.asm
+	jma us_fastmap_mark_i		; 0xE0CC fastmap.asm
+	jma us_fastmap_gethw_i		; 0xE0CE fastmap.asm
+	jma us_fastmap_getyx_i		; 0xE0D0 fastmap.asm
+	jma us_fastmap_setdly_i		; 0xE0D2 fastmap.asm
+	jma us_fastmap_draw_i		; 0xE0D4 fastmap.asm
 
 
 
@@ -145,6 +145,7 @@ include "sprite.asm"
 include "smux.asm"
 include "math.asm"
 include "dsurf.asm"
-include "tile.asm"
+include "iftile.asm"
+include "btile.asm"
 include "tmap.asm"
 include "fastmap.asm"

@@ -16,7 +16,7 @@
 ; 0xFAA1: Height of tile map in tiles
 ; 0xFAA2: Word offset of tile map start in PRAM, high
 ; 0xFAA3: Word offset of tile map start in PRAM, low
-; 0xFAA4: Blit function of tileset
+; 0xFAA4: Tileset pointer
 ; 0xFAA5: Destination width (cells)
 ; 0xFAA6: Destination height
 ; 0xFAA7: Tile width (cells)
@@ -32,12 +32,6 @@
 ; Word2: Height of tile map in tiles
 ; Word3: Word offset of tile map start in PRAM, high
 ; Word4: Word offset of tile map start in PRAM, low
-; Word5: Blit function of tileset
-; Word6: Acceletator init function of tileset
-; Word7: Height:Width request function of tileset
-;
-; The three functions must have an interface like us_tile_getacc,
-; us_tile_blit, and us_tile_gethw which are the defaults.
 ;
 
 include "rrpge.asm"
@@ -54,8 +48,8 @@ us_tmap_tmh	equ	0xFAA1
 us_tmap_tmoffh	equ	0xFAA2
 ; 0xFAA3: Word offset of tile map start in PRAM, low
 us_tmap_tmoffl	equ	0xFAA3
-; 0xFAA4: Blit function of tileset
-us_tmap_blitfn	equ	0xFAA4
+; 0xFAA4: Tileset pointer
+us_tmap_tpt	equ	0xFAA4
 ; 0xFAA5: Destination width (cells)
 us_tmap_dw	equ	0xFAA5
 ; 0xFAA6: Destination height
@@ -75,27 +69,15 @@ us_tmap_y	equ	0xFAAB
 
 
 ;
-; Implementation of us_tmap_setfn
+; Implementation of us_tmap_new
 ;
-us_tmap_setfn_i:
+us_tmap_new_i:
 .tgp	equ	0		; Target pointer
 .tst	equ	1		; Tileset to use
 .wdt	equ	2		; Width
 .hgt	equ	3		; Height
 .ofh	equ	4		; Word offset in PRAM, high
 .ofl	equ	5		; Word offset in PRAM, low
-.blf	equ	6		; Tileset blit function
-.acf	equ	7		; Tileset getacc function
-.whf	equ	8		; Tileset Height:Width requsest function
-
-	mov x3,    [$.tgp]
-	add x3,    5
-	mov c,     [$.blf]
-	mov [x3],  c
-	mov c,     [$.acf]
-	mov [x3],  c
-	mov c,     [$.whf]
-.entr:	mov [x3],  c		; Entry for us_tmap_set
 
 	mov x3,    [$.tgp]
 	mov c,     [$.tst]
@@ -113,31 +95,9 @@ us_tmap_setfn_i:
 
 
 ;
-; Implementation of us_tmap_set
+; Implementation of us_tmap_acc
 ;
-us_tmap_set_i:
-.tgp	equ	0		; Target pointer
-.tst	equ	1		; Tileset to use
-.wdt	equ	2		; Width
-.hgt	equ	3		; Height
-.ofh	equ	4		; Word offset in PRAM, high
-.ofl	equ	5		; Word offset in PRAM, low
-
-	mov x3,    [$.tgp]
-	add x3,    5
-	mov c,     us_tile_blit
-	mov [x3],  c
-	mov c,     us_tile_getacc
-	mov [x3],  c
-	mov c,     us_tile_gethw
-	jms us_tmap_setfn_i.entr
-
-
-
-;
-; Implementation of us_tmap_getacc
-;
-us_tmap_getacc_i:
+us_tmap_acc_i:
 .srp	equ	0		; Source tilemap pointer
 .dsp	equ	1		; Destination surface pointer
 
@@ -146,8 +106,8 @@ us_tmap_getacc_i:
 	mov [us_tmap_x], c
 .entr:	mov [us_tmap_y], c
 
-	jfa us_dsurf_getacc {[$.dsp]}
-	jfa us_dsurf_getpw  {[$.dsp]}
+	jfa us_dsurf_getacc_i {[$.dsp]}
+	jfa us_dsurf_getpw_i  {[$.dsp]}
 	mov [us_tmap_dw], x3	; Width of destination
 	mov x3,    1
 	shl x3,    c		; Total cell count of destination / 2
@@ -156,18 +116,15 @@ us_tmap_getacc_i:
 	mov [us_tmap_dh], x3	; Height of destination (rounded down to even)
 
 	mov x3,    [$.srp]
-	mov c,     [x3]		; Tileset to use
-	add x3,    5
-	jfa [x3]   {c}		; Call tileset's accelerator init
+	jfa us_tile_acc_i   {[x3]}
 	mov x3,    [$.srp]
-	mov c,     [x3]		; Tileset to use
-	add x3,    6
-	jfa [x3]   {c}		; Call tileset's Height:Width retrieve
+	jfa us_tile_gethw_i {[x3]}
 	mov [us_tmap_tw], x3	; Width retrieved in x3
 	mov [us_tmap_th], c	; Height retrieved in c
 
 	mov x3,    [$.srp]
-	add x3,    1
+	mov c,     [x3]
+	mov [us_tmap_tpt], c
 	mov c,     [x3]
 	mov [us_tmap_tmw], c
 	mov c,     [x3]
@@ -176,17 +133,15 @@ us_tmap_getacc_i:
 	mov [us_tmap_tmoffh], c
 	mov c,     [x3]
 	mov [us_tmap_tmoffl], c
-	mov c,     [x3]
-	mov [us_tmap_blitfn], c
 
 	rfn
 
 
 
 ;
-; Implementation of us_tmap_getaccxy
+; Implementation of us_tmap_accxy
 ;
-us_tmap_getaccxy_i:
+us_tmap_accxy_i:
 .srp	equ	0		; Source tilemap pointer
 .dsp	equ	1		; Destination surface pointer
 .oxw	equ	2		; X origin (whole)
@@ -197,14 +152,14 @@ us_tmap_getaccxy_i:
 	mov c,     [$.oyw]
 .entr:	mov x3,    [$.oxw]
 	mov [us_tmap_x], x3
-	jms us_tmap_getacc_i.entr
+	jms us_tmap_acc_i.entr
 
 
 
 ;
 ; Implementation of us_tmap_getaccxfy
 ;
-us_tmap_getaccxfy_i:
+us_tmap_accxfy_i:
 .srp	equ	0		; Source tilemap pointer
 .dsp	equ	1		; Destination surface pointer
 .oxw	equ	2		; X origin (whole)
@@ -214,7 +169,7 @@ us_tmap_getaccxfy_i:
 	mov c,     [$.oxf]
 	mov [us_tmap_xf], c
 	mov c,     [$.oyw]
-	jms us_tmap_getaccxy_i.entr
+	jms us_tmap_accxy_i.entr
 
 
 
@@ -222,16 +177,17 @@ us_tmap_getaccxfy_i:
 ; Implementation of us_tmap_blit
 ;
 us_tmap_blit_i:
-.tlx	equ	0		; Tile X start position
-.tly	equ	1		; Tile Y start position
-.wdt	equ	2		; Width of area in tiles
-.hgt	equ	3		; Height of area in tiles
+.srp	equ	0		; Source tilemap pointer (not used)
+.tlx	equ	1		; Tile X start position
+.tly	equ	2		; Tile Y start position
+.wdt	equ	3		; Width of area in tiles
+.hgt	equ	4		; Height of area in tiles
 
-.xpb	equ	4		; X position base on destination
-.yps	equ	5		; Y position on destination
-.trx	equ	6		; X loop termination point
-.try	equ	7		; Y loop termination point
-.yml	equ	8		; Pre-multiplied Y position
+.xpb	equ	5		; X position base on destination
+.yps	equ	6		; Y position on destination
+.trx	equ	7		; X loop termination point
+.try	equ	8		; Y loop termination point
+.yml	equ	0		; Pre-multiplied Y position
 .tdw	equ	9		; us_tmap_dw
 .tdh	equ	10		; us_tmap_dh
 
@@ -261,8 +217,8 @@ us_tmap_blit_i:
 
 	; Save CPU registers
 
-	xch [$2],  a		; Also load width parameter
-	xch [$3],  b		; Also load height parameter
+	xch [$3],  a		; Also load width parameter
+	xch [$4],  b		; Also load height parameter
 	mov [$11], x0
 	mov [$12], x1
 	mov [$13], x2
@@ -385,7 +341,7 @@ us_tmap_blit_i:
 
 	mov x3,    [$.yml]
 	add x3,    x2		; Offset on destination
-	jfa [us_tmap_blitfn] {[P3_RW], x3, [us_tmap_xf]}
+	jfa us_tile_blit_i {[us_tmap_tpt], [P3_RW], x3, [us_tmap_xf]}
 
 	xeq [P3_AL], a
 	jms .xl0
@@ -420,8 +376,8 @@ us_tmap_blit_i:
 
 	; Restore CPU regs. & exit
 
-.exit:	mov a,     [$2]
-	mov b,     [$3]
+.exit:	mov a,     [$3]
+	mov b,     [$4]
 	mov x0,    [$11]
 	mov x1,    [$12]
 	mov x2,    [$13]
@@ -492,7 +448,7 @@ us_tmap_blit_i:
 	mov x3,    [$.yps]
 	mul x3,    [$.tdw]
 	add x3,    [$.xpb]	; Offset on destination
-	jfa [us_tmap_blitfn] {[P3_RW], x3, [us_tmap_xf]}
+	jfa us_tile_blit_i {[us_tmap_tpt], [P3_RW], x3, [us_tmap_xf]}
 
 	; Perform Y increment and wrap calculations
 
@@ -544,9 +500,7 @@ us_tmap_gettilehw_i:
 .tlp	equ	0		; Tilemap pointer
 
 	mov x3,    [$.tlp]
-	mov c,     [x3]
-	add x3,    6
-	jfa [x3]   {c}		; Call tileset's Height:Width retrieve
+	jfa us_tile_gethw_i {[x3]}
 	rfn
 
 

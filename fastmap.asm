@@ -369,7 +369,7 @@ us_fastmap_draw_i:
 
 	; Initialize for blitting
 
-	jfa us_tmap_getacc_i {x0, x1}
+	jfa us_tmap_acc_i {x0, x1}
 
 	; Load display list
 
@@ -514,18 +514,23 @@ us_fastmap_draw_i:
 	sub x3,    x1		; YDisp - YChg prepared
 
 	; Do the two blits, every parameter ready. First the side region,
-	; since it needs a parameter from X3 which is clobbered in the
+	; since it needs a parameter from X3 (=>C) which is clobbered in the
 	; function. The blit function can deal with zero width or height, so
 	; don't care.
 
-	jfa us_tmap_blit_i {[$.sr0], [$.sr1], x0,      x3}
-	jfa us_tmap_blit_i {a,       [$.wr1], [$.opw], x1}
+	mov c,     x3
+	mov x3,    [$.fmp]
+	mov b,     [x3]		; Load tile map pointer
+	jfa us_tmap_blit_i {b, [$.sr0], [$.sr1], x0,       c}
+	jfa us_tmap_blit_i {b, a,       [$.wr1], [$.opw], x1}
 	jms .ben
 
 .flu:	; Full update. Use the new X:Y positions with the display width and
 	; height in $.opw and $.oph to update the entire displayed area.
 
-	jfa us_tmap_blit_i {a, b, [$.opw], [$.oph]}
+	mov x3,    [$.fmp]
+	mov c,     [x3]		; Load tile map pointer
+	jfa us_tmap_blit_i {c, a, b, [$.opw], [$.oph]}
 
 .ben:	; Clear full update flag
 

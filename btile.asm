@@ -1,5 +1,5 @@
 ;
-; RRPGE User Library functions - Tilesets
+; RRPGE User Library functions - Basic tileset
 ;
 ; Author    Sandor Zsuga (Jubatian)
 ; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
@@ -8,7 +8,7 @@
 ;           root.
 ;
 ;
-; Basic accelerator tileset management.
+; Basic accelerator tileset.
 ;
 ; Uses the following CPU RAM locations:
 ;
@@ -18,10 +18,14 @@
 ;
 ; Uses tileset structures (objects) of the following layout:
 ;
-; Word0: Width (high 7 bits, cells) and Height (low 9 bits) of tile
-; Word1: Bank of source
-; Word2: Start offset of source (tile index 0)
-; Word3: Blit configuration
+; Word0: <Tileset interface>
+; Word1: <Tileset interface>
+; Word2: <Tileset interface>
+; Word3: Width (cells) of tiles
+; Word4: Height of tiles
+; Word5: Bank of source
+; Word6: Start offset of source (tile index 0)
+; Word7: Blit configuration
 ;
 ; The blit configuration:
 ;
@@ -34,6 +38,7 @@
 ;
 
 include "rrpge.asm"
+include "iftile.asm"
 
 section code
 
@@ -49,23 +54,22 @@ us_tile_moff	equ	0xFABE
 
 
 ;
-; Implementation of us_tile_set
+; Implementation of us_btile_new
 ;
-us_tile_set_i:
+us_btile_new_i:
 .tgp	equ	0		; Target pointer
-.wdt	equ	1		; Width
-.hgt	equ	2		; Height
+.wdt	equ	1		; Width of tiles in cells
+.hgt	equ	2		; Height of tiles
 .bnk	equ	3		; Bank of tile source
 .off	equ	4		; Offset (tile index 0) of tile source
 .cfg	equ	5		; Blit configuration
 
+	jfa us_tile_new_i {us_btile_blit, us_btile_gethw, us_btile_acc}
+
 	mov c,     [$.wdt]
-	shl c,     9		; To high 7 bits
-	mov x3,    [$.hgt]
-	and x3,    0x01FF
-	or  c,     x3		; Width & Height combined
-	mov x3,    [$.tgp]
-	mov [x3],  c		; Combined width & height
+	mov [x3],  c		; Width of tiles
+	or  c,     [$.hgt]
+	mov [x3],  c		; Height of tiles
 	mov c,     [$.bnk]
 	mov [x3],  c		; Bank select
 	mov c,     [$.off]
@@ -77,39 +81,28 @@ us_tile_set_i:
 
 
 ;
-; Implementation of us_tile_getacc
+; Implementation of us_btile_acc
 ;
-us_tile_getacc_i:
+us_btile_acc_i:
 .srp	equ	0		; Source pointer
 
 	mov x3,    [$.srp]
+	add x3,    3
 	mov c,     0x800A
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
-	shr c,     9		; Width
-	xne c,     0
-	bts c,     7		; 0 => 128 cells
+	mov [$0],  c		; Save width for later uses
 	mov [P_GFIFO_DATA], c	; 0x800A: Pointer X post-add whole
-	mov x3,    0x8018
-	mov [P_GFIFO_ADDR], x3
-	mov [P_GFIFO_DATA], c	; 0x8018: Count of cells to blit, whole
-
-	mov x3,    [$.srp]
-	mov [$0],  c		; Save width for multiplier
-
-	mov c,     0
-	mov [P_GFIFO_DATA], c	; 0x8019: Count of cells to blit, fraction
-
 	mov c,     0x8017
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
-	and c,     0x1FF	; Height
-	xne c,     0
-	bts c,     9		; 0 => 512 lines
 	mov [P_GFIFO_DATA], c	; 0x8017: Count of rows to blit
-
 	mul c,     [$0]		; Tile index multiplier
 	mov [us_tile_imul], c
+	mov c,     [$0]
+	mov [P_GFIFO_DATA], c	; 0x8018: Count of cells to blit, whole
+	mov c,     0
+	mov [P_GFIFO_DATA], c	; 0x8019: Count of cells to blit, fraction
 
 	mov c,     0x8012
 	mov [P_GFIFO_ADDR], c
@@ -143,18 +136,22 @@ us_tile_getacc_i:
 
 
 ;
-; Implementation of us_tile_blit
+; Implementation of us_btile_blit
 ;
-us_tile_blit_i:
-.idx	equ	0		; Tile index
-.ofh	equ	1		; Destination offset, high
-.ofl	equ	2		; Destination offset, low
+us_btile_blit_i:
+.srp	equ	0		; Source pointer (not used)
+.idx	equ	1		; Tile index
+.ofh	equ	2		; Destination offset, high
+.ofl	equ	3		; Destination offset, low
 
 	mov x3,    0x801C
 	mov [P_GFIFO_ADDR], x3
 
 	mov c,     [$.ofh]
 	mov [P_GFIFO_DATA], c	; 0x801C: Destination whole
+	mov c,     0
+	dw  0b1000000010110111	; mov x3, sp (Can't be expressed direct due to Assembler bug!)
+	xug 4,     x3		; Fraction is zero unless parameter is provided
 	mov c,     [$.ofl]
 	mov [P_GFIFO_DATA], c	; 0x801D: Destination fraction
 
@@ -257,37 +254,14 @@ us_tile_blit_i:
 
 
 ;
-; Implementation of us_tile_blitb
+; Implementation of us_btile_getwh
 ;
-us_tile_blitb_i:
-.idx	equ	0		; Tile index
-.ofh	equ	1		; Destination offset, high
-
-	mov x3,    0x801C
-	mov [P_GFIFO_ADDR], x3
-
-	mov c,     [$.ofh]
-	mov [P_GFIFO_DATA], c	; 0x801C: Destination whole
-	mov c,     0
-	mov [P_GFIFO_DATA], c	; 0x801D: Destination fraction
-
-	jms us_tile_blit_i.entr	; Transfer to normal blit
-
-
-
-;
-; Implementation of us_tile_getwh
-;
-us_tile_gethw_i:
+us_btile_gethw_i:
 .srp	equ	0		; Source pointer
 
 	mov x3,    [$.srp]
-	mov c,     [x3]
-	mov x3,    c
-	shr x3,    9		; Width
-	xne x3,    0
-	bts x3,    7		; 0 => 128 cells
-	and c,     0x1FF	; Height
-	xne c,     0
-	bts c,     9		; 0 => 512 lines
+	add x3,    3
+	mov c,     [x3]		; Width
+	mov x3,    [x3]		; Height
+	xch x3,    c
 	rfn
