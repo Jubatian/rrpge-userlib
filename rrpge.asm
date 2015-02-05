@@ -241,8 +241,8 @@ us_fastmap_draw		equ	0xE0D4
 ; User Library locations (pointers)
 ;
 
-up_font_4		equ	0xFA90
-up_font_4i		equ	0xFA98
+up_font_4		equ	0xFA9C
+up_font_4i		equ	0xFAA4
 up_font_8		equ	0xFAAC
 up_font_8i		equ	0xFAB4
 up_dsurf		equ	0xFAC0

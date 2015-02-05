@@ -12,18 +12,13 @@
 ;
 ; Uses the following CPU RAM locations:
 ;
-; 0xFAA0: Width of tile map in tiles
-; 0xFAA1: Height of tile map in tiles
-; 0xFAA2: Word offset of tile map start in PRAM, high
-; 0xFAA3: Word offset of tile map start in PRAM, low
-; 0xFAA4: Tileset pointer
-; 0xFAA5: Destination width (cells)
-; 0xFAA6: Destination height
-; 0xFAA7: Tile width (cells)
-; 0xFAA8: Tile height
-; 0xFAA9: X origin fraction
-; 0xFAAA: X origin
-; 0xFAAB: Y origin
+; 0xFA95: Destination width (cells)
+; 0xFA96: Destination height
+; 0xFA97: Tile width (cells)
+; 0xFA98: Tile height
+; 0xFA99: X origin fraction
+; 0xFA9A: X origin
+; 0xFA9B: Y origin
 ;
 ; Uses tile map structures (objects) of the following layout:
 ;
@@ -40,30 +35,20 @@ section code
 
 
 
-; 0xFAA0: Width of tile map in tiles
-us_tmap_tmw	equ	0xFAA0
-; 0xFAA1: Height of tile map in tiles
-us_tmap_tmh	equ	0xFAA1
-; 0xFAA2: Word offset of tile map start in PRAM, high
-us_tmap_tmoffh	equ	0xFAA2
-; 0xFAA3: Word offset of tile map start in PRAM, low
-us_tmap_tmoffl	equ	0xFAA3
-; 0xFAA4: Tileset pointer
-us_tmap_tpt	equ	0xFAA4
-; 0xFAA5: Destination width (cells)
-us_tmap_dw	equ	0xFAA5
-; 0xFAA6: Destination height
-us_tmap_dh	equ	0xFAA6
-; 0xFAA7: Tile width (cells)
-us_tmap_tw	equ	0xFAA7
-; 0xFAA8: Tile height
-us_tmap_th	equ	0xFAA8
-; 0xFAA9: X origin fraction
-us_tmap_xf	equ	0xFAA9
-; 0xFAAA: X origin
-us_tmap_x	equ	0xFAAA
-; 0xFAAB: Y origin
-us_tmap_y	equ	0xFAAB
+; 0xFA95: Destination width (cells)
+us_tmap_dw	equ	0xFA95
+; 0xFA96: Destination height
+us_tmap_dh	equ	0xFA96
+; 0xFA97: Tile width (cells)
+us_tmap_tw	equ	0xFA97
+; 0xFA98: Tile height
+us_tmap_th	equ	0xFA98
+; 0xFA99: X origin fraction
+us_tmap_xf	equ	0xFA99
+; 0xFA9A: X origin
+us_tmap_x	equ	0xFA9A
+; 0xFA9B: Y origin
+us_tmap_y	equ	0xFA9B
 
 
 
@@ -122,18 +107,6 @@ us_tmap_acc_i:
 	mov [us_tmap_tw], x3	; Width retrieved in x3
 	mov [us_tmap_th], c	; Height retrieved in c
 
-	mov x3,    [$.srp]
-	mov c,     [x3]
-	mov [us_tmap_tpt], c
-	mov c,     [x3]
-	mov [us_tmap_tmw], c
-	mov c,     [x3]
-	mov [us_tmap_tmh], c
-	mov c,     [x3]
-	mov [us_tmap_tmoffh], c
-	mov c,     [x3]
-	mov [us_tmap_tmoffl], c
-
 	rfn
 
 
@@ -177,7 +150,7 @@ us_tmap_accxfy_i:
 ; Implementation of us_tmap_blit
 ;
 us_tmap_blit_i:
-.srp	equ	0		; Source tilemap pointer (not used)
+.srp	equ	0		; Source tilemap pointer
 .tlx	equ	1		; Tile X start position
 .tly	equ	2		; Tile Y start position
 .wdt	equ	3		; Width of area in tiles
@@ -187,9 +160,14 @@ us_tmap_blit_i:
 .yps	equ	6		; Y position on destination
 .trx	equ	7		; X loop termination point
 .try	equ	8		; Y loop termination point
-.yml	equ	0		; Pre-multiplied Y position
+.yml	equ	0		; Pre-multiplied Y position (reuses .srp)
 .tdw	equ	9		; us_tmap_dw
 .tdh	equ	10		; us_tmap_dh
+.tpt	equ	11		; Tileset pointer (Word0 of tilemap)
+.tmw	equ	12		; Tile map width (Word1 of tilemap)
+.tmh	equ	13		; Tile map height (Word2 of tilemap)
+.toh	equ	14		; Tile map offset high (Word3 of tilemap)
+.tol	equ	15		; Tile map offset low (Word4 of tilemap)
 
 ;
 ; Region blit with wrapping.
@@ -213,15 +191,16 @@ us_tmap_blit_i:
 ; The same way like above, divison is not used within the area blit loops.
 ;
 
-	mov sp,    14
+	mov sp,    19
 
 	; Save CPU registers
 
 	xch [$3],  a		; Also load width parameter
 	xch [$4],  b		; Also load height parameter
-	mov [$11], x0
-	mov [$12], x1
-	mov [$13], x2
+	mov x3,    16
+	mov [$x3], x0
+	mov [$x3], x1
+	mov [$x3], x2
 
 	; If either widht or height is zero, no output
 
@@ -229,6 +208,20 @@ us_tmap_blit_i:
 	jms .exit
 	xne b,     0
 	jms .exit
+
+	; Load the source tilemap into stack for easier access
+
+	mov x3,    [$.srp]
+	mov c,     [x3]
+	mov [$.tpt], c
+	mov c,     [x3]
+	mov [$.tmw], c
+	mov c,     [x3]
+	mov [$.tmh], c
+	mov c,     [x3]
+	mov [$.toh], c
+	mov c,     [x3]
+	mov [$.tol], c
 
 	; Load us_tmap_dw and us_tmap_dh in stack to save bytes further on.
 
@@ -280,10 +273,10 @@ us_tmap_blit_i:
 	; any more.
 
 	mov c,     [$.tlx]
-	div c:c,   [us_tmap_tmw]
+	div c:c,   [$.tmw]
 	mov [$.tlx], c
 	mov c,     [$.tly]
-	div c:c,   [us_tmap_tmh]
+	div c:c,   [$.tmh]
 	mov [$.tly], c
 
 	; Initialize Pointer 3 for tile map walking
@@ -298,7 +291,7 @@ us_tmap_blit_i:
 	; Calculate tile map width as PRAM address in x1:x0. This is used for
 	; wrapping the tile map on X.
 
-	mov x0,    [us_tmap_tmw]
+	mov x0,    [$.tmw]
 	shl c:x0,  4
 	mov x1,    c
 
@@ -307,10 +300,10 @@ us_tmap_blit_i:
 	; Calculate start offset for Pointer 3.
 
 	mov a,     [$.tly]
-	mul c:a,   [us_tmap_tmw]
+	mul c:a,   [$.tmw]
 	mov b,     c
-	add c:a,   [us_tmap_tmoffl]
-	adc b,     [us_tmap_tmoffh]
+	add c:a,   [$.tol]
+	adc b,     [$.toh]
 	mov x2,    a		; Transfer to x3:x2, so b:a is saved for
 	mov x3,    b		; termination offset calculation
 	add c:x2,  [$.tlx]
@@ -341,7 +334,7 @@ us_tmap_blit_i:
 
 	mov x3,    [$.yml]
 	add x3,    x2		; Offset on destination
-	jfa us_tile_blit_i {[us_tmap_tpt], [P3_RW], x3, [us_tmap_xf]}
+	jfa us_tile_blit_i {[$.tpt], [P3_RW], x3, [us_tmap_xf]}
 
 	xeq [P3_AL], a
 	jms .xl0
@@ -361,8 +354,8 @@ us_tmap_blit_i:
 
 	mov c,     [$.tly]
 	add c,     1
-	xug [us_tmap_tmh], c
-	sub c,     [us_tmap_tmh]
+	xug [$.tmh], c
+	sub c,     [$.tmh]
 	mov [$.tly], c		; Tile map Y updated OK
 
 	mov c,     [$.yps]
@@ -378,9 +371,10 @@ us_tmap_blit_i:
 
 .exit:	mov a,     [$3]
 	mov b,     [$4]
-	mov x0,    [$11]
-	mov x1,    [$12]
-	mov x2,    [$13]
+	mov x3,    16
+	mov x0,    [$x3]
+	mov x1,    [$x3]
+	mov x2,    [$x3]
 	rfn
 
 .col:	; Column blit (width is set 1)
@@ -402,16 +396,16 @@ us_tmap_blit_i:
 	; any more.
 
 	mov c,     [$.tlx]
-	div c:c,   [us_tmap_tmw]
+	div c:c,   [$.tmw]
 	mov [$.tlx], c
 	mov c,     [$.tly]
-	div c:c,   [us_tmap_tmh]
+	div c:c,   [$.tmh]
 	mov [$.tly], c
 
 	; Initialize Pointer 3 for tile map walking. Normal increment is the
 	; tile map width.
 
-	mov a,     [us_tmap_tmw]
+	mov a,     [$.tmw]
 	shl c:a,   4
 	mov [P3_IH], c
 	mov [P3_IL], a		; Tile map width
@@ -421,10 +415,10 @@ us_tmap_blit_i:
 	; Calculate initial Pointer 3 offset
 
 	mov x2,    [$.tly]
-	mul c:x2,  [us_tmap_tmw]
+	mul c:x2,  [$.tmw]
 	mov x3,    c
-	add c:x2,  [us_tmap_tmoffl]
-	adc x3,    [us_tmap_tmoffh]
+	add c:x2,  [$.tol]
+	adc x3,    [$.toh]
 	add c:x2,  [$.tlx]
 	add x3,    c
 	shl c:x2,  4
@@ -435,8 +429,8 @@ us_tmap_blit_i:
 	; Calculate offset reduction in b:a, to be used for wrapping the
 	; tile map on Y. The reduction is the size of the tile map.
 
-	mov a,     [us_tmap_tmw]
-	mul c:a,   [us_tmap_tmh]
+	mov a,     [$.tmw]
+	mul c:a,   [$.tmh]
 	mov b,     c
 	shl c:a,   4
 	slc b,     4
@@ -448,13 +442,13 @@ us_tmap_blit_i:
 	mov x3,    [$.yps]
 	mul x3,    [$.tdw]
 	add x3,    [$.xpb]	; Offset on destination
-	jfa us_tile_blit_i {[us_tmap_tpt], [P3_RW], x3, [us_tmap_xf]}
+	jfa us_tile_blit_i {[$.tpt], [P3_RW], x3, [us_tmap_xf]}
 
 	; Perform Y increment and wrap calculations
 
 	mov c,     [$.tly]
 	add c,     1
-	xug [us_tmap_tmh], c
+	xug [$.tmh], c
 	jms .tyw
 .tywe:	mov [$.tly], c		; Tile map Y updated OK
 
@@ -471,7 +465,7 @@ us_tmap_blit_i:
 
 .tyw:	; Tilemap Y wraparound
 
-	sub c,     [us_tmap_tmh]
+	sub c,     [$.tmh]
 	sub c:[P3_AL], a
 	sbc [P3_AH], b
 	jms .tywe
