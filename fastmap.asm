@@ -510,15 +510,14 @@ us_fastmap_draw_i:
 	xug [$.oph], x1
 	jms .flu		; Y change > visible height: full update
 
-	mov x3,    [$.oph]
-	sub x3,    x1		; YDisp - YChg prepared
+	mov c,     [$.oph]
+	sub c,     x1		; YDisp - YChg prepared
 
 	; Do the two blits, every parameter ready. First the side region,
-	; since it needs a parameter from X3 (=>C) which is clobbered in the
+	; since it needs a parameter from C which is clobbered in the
 	; function. The blit function can deal with zero width or height, so
 	; don't care.
 
-	mov c,     x3
 	mov x3,    [$.fmp]
 	mov b,     [x3]		; Load tile map pointer
 	jfa us_tmap_blit_i {b, [$.sr0], [$.sr1], x0,       c}
@@ -529,8 +528,7 @@ us_fastmap_draw_i:
 	; height in $.opw and $.oph to update the entire displayed area.
 
 	mov x3,    [$.fmp]
-	mov c,     [x3]		; Load tile map pointer
-	jfa us_tmap_blit_i {c, a, b, [$.opw], [$.oph]}
+	jfa us_tmap_blit_i {[x3], a, b, [$.opw], [$.oph]}
 
 .ben:	; Clear full update flag
 

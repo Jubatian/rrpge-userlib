@@ -8,7 +8,8 @@
 ;           root.
 ;
 ;
-; Accelerator tilemap core.
+; Accelerator tilemap core. It should be placed near the tileset interface to
+; allow some tail call short jumps to it.
 ;
 ; Uses the following CPU RAM locations:
 ;
@@ -101,13 +102,13 @@ us_tmap_acc_i:
 	mov [us_tmap_dh], x3	; Height of destination (rounded down to even)
 
 	mov x3,    [$.srp]
-	jfa us_tile_acc_i   {[x3]}
-	mov x3,    [$.srp]
 	jfa us_tile_gethw_i {[x3]}
 	mov [us_tmap_tw], x3	; Width retrieved in x3
 	mov [us_tmap_th], c	; Height retrieved in c
-
-	rfn
+	mov x3,    [$.srp]
+	mov x3,    [x3]
+	mov [$0],  x3		; Just move tilemap pointer in param0 ...
+	jms us_tile_acc_i	; ... and tail-transfer.
 
 
 
@@ -494,8 +495,9 @@ us_tmap_gettilehw_i:
 .tlp	equ	0		; Tilemap pointer
 
 	mov x3,    [$.tlp]
-	jfa us_tile_gethw_i {[x3]}
-	rfn
+	mov x3,    [x3]
+	mov [$0],  x3		; Just load the tileset pointer ...
+	jms us_tile_gethw_i	; ... and do a fast tail transfer "call"
 
 
 
