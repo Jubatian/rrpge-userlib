@@ -78,7 +78,7 @@ us_smux_setptr_i:
 
 	mov a,     [$.dld]
 	and a,     3		; Display list entry size
-	not d,     0x0003	; Loads 0xFFFC
+	mov d,     0xFFFC
 	shl d,     a
 	and d,     0x07FC	; Mask for display list offset
 	xbc [$.dld], 13		; Double scan?
@@ -121,7 +121,7 @@ us_smux_setptr_i:
 	mov a,     [$2]
 	mov b,     [$3]
 	mov d,     [$4]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -199,7 +199,7 @@ us_smux_reset_i:
 	mov d,     [$1]
 	mov x2,    [$2]
 	mov xm,    [$3]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -211,12 +211,12 @@ us_smux_setbounds_i:
 .cls	equ	0		; Start column
 .clc	equ	1		; Count of columns
 
-	mov c,     [$.cls]
-	mov [us_smux_cs], c
-	mov c,     [$.clc]
-	mov [us_smux_cc], c
+	mov x3,    [$.cls]
+	mov [us_smux_cs], x3
+	mov x3,    [$.clc]
+	mov [us_smux_cc], x3
 	btc [us_smux_df], 0	; Mark dirty
-	rfn
+	rfn x3,    0
 
 
 
@@ -379,7 +379,7 @@ us_smux_add_i:
 	mov x2,    [$12]
 	mov xm,    [$13]
 	mov xh,    [$14]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -621,4 +621,4 @@ us_smux_addlist_i:
 	mov x2,    [$11]
 	mov xm,    [$12]
 	mov xh,    [$13]
-	rfn
+	rfn c:x3,  0

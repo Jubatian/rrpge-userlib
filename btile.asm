@@ -76,7 +76,7 @@ us_btile_new_i:
 	mov [x3],  c		; Offset (tile index 0)
 	mov c,     [$.cfg]
 	mov [x3],  c		; Blit configuration
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -131,7 +131,7 @@ us_btile_acc_i:
 	or  x3,    c		; If bit8 was set, then colorkey is AND mask
 	mov [P_GFIFO_DATA], x3	; 0x8016: AND mask and Colorkey
 
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -150,8 +150,7 @@ us_btile_blit_i:
 	mov c,     [$.ofh]
 	mov [P_GFIFO_DATA], c	; 0x801C: Destination whole
 	mov c,     0
-	dw  0b1000000010110111	; mov x3, sp (Can't be expressed direct due to Assembler bug!)
-	xug 4,     x3		; Fraction is zero unless parameter is provided
+	xug 4,     sp		; Fraction is zero unless parameter is provided
 	mov c,     [$.ofl]
 	mov [P_GFIFO_DATA], c	; 0x801D: Destination fraction
 
@@ -172,30 +171,30 @@ us_btile_blit_i:
 	shr c,     8
 	and c,     0x00E0	; 3 Pixel OR mask bits, rest zero
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x1FFF	; Tile index bits
+	mov c,     0x1FFF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti6:	mov c,     [$.idx]
 	shr c,     8
 	and c,     0x00F0	; 4 Pixel OR mask bits, rest zero
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x0FFF	; Tile index bits
+	mov c,     0x0FFF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti5:	mov c,     [$.idx]
 	shr c,     8
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x00FF	; Tile index bits
+	mov c,     0x00FF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti4:	mov c,     [$.idx]
 	shr c,     12
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x0FFF	; Tile index bits
+	mov c,     0x0FFF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti3:	mov c,     [$.idx]
@@ -206,8 +205,8 @@ us_btile_blit_i:
 	xeq c,     0
 	bts c,     13		; Enable reindexing
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x1FFF	; Tile index bits
+	mov c,     0x1FFF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti2:	mov c,     [$.idx]
@@ -218,8 +217,8 @@ us_btile_blit_i:
 	xeq c,     0
 	bts c,     13		; Enable reindexing
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x0FFF	; Tile index bits
+	mov c,     0x0FFF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti1:	mov c,     [$.idx]
@@ -228,16 +227,16 @@ us_btile_blit_i:
 	xeq c,     0
 	bts c,     13		; Enable reindexing
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x07FF	; Tile index bits
+	mov c,     0x07FF	; Tile index bits
+	and c,     [$.idx]
 	jms .tic
 
 .ti0:	mov c,     0
 	xbc [$.idx], 15
 	mov c,     0x6000	; Reindexing + VDR enabled
 	mov [P_GFIFO_DATA], c
-	mov c,     [$.idx]
-	and c,     0x7FFF	; Tile index bits
+	mov c,     0x7FFF	; Tile index bits
+	and c,     [$.idx]
 
 .tic:	mul c,     [us_tile_imul]
 	add c,     [us_tile_moff]
@@ -249,7 +248,7 @@ us_btile_blit_i:
 	mov [P_GFIFO_ADDR], c
 	mov [P_GFIFO_DATA], c	; 0x801F: Start trigger
 
-	rfn
+	rfn c:x3,  0
 
 
 

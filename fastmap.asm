@@ -86,7 +86,7 @@ us_fastmap_new_i:
 	mov [x3],  c
 	mov c,     [$.slr]
 	mov [x3],  c
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -99,7 +99,7 @@ us_fastmap_mark_i:
 	mov x3,    [$.fmp]
 	add x3,    6
 	bts [x3],  0
-	rfn
+	rfn x3,    0
 
 
 
@@ -246,7 +246,7 @@ us_fastmap_setdly_i:
 	mov a,     [$.nws]
 	mov b,     [$.nwr]
 	mov d,     [$3]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -621,7 +621,7 @@ us_fastmap_draw_i:
 
 	; Build the display list
 
-	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov c,     0xFFFC	; Loads 0xFFFC (to discard low 2 bits of height)
 	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
 	and c,     [$.dly]
 	and a,     [$.dly]
@@ -661,4 +661,4 @@ us_fastmap_draw_i:
 	mov b,     [$15]
 	mov x0,    [$16]
 	mov x1,    [$17]
-	rfn
+	rfn c:x3,  0

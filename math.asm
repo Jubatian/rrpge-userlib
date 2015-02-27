@@ -97,9 +97,8 @@ us_div32_i:
 	add c,     [$2]
 	rfn
 
-.l1:	mov x3,    [$.o1l]	; Special return for a divisor of 1
-	mov c,     [$.o1h]
-	rfn
+.l1:	mov c,     [$.o1h]
+	rfn x3,    [$.o1l]	; Special return for a divisor of 1
 
 
 
@@ -134,7 +133,7 @@ us_cos_i:
 	; interpolating would do those with unsigned logic).
 
 	xne c,     0
-	jms .fast		; "Whole" angles from the table
+	rfn x3,    [x3]		; "Whole" angles from the table
 	xne x3,    0xFF00
 	jms .crzn		; Zero => Negative crossover
 	xne x3,    0xFFFF
@@ -151,25 +150,21 @@ us_cos_i:
 	neg c,     c		; c:  Multiplier (low)
 	mul c:x3,  c		; c:  LowM
 	add c,     [$0]		; c:  LowM + HighM (Interpolated result)
-	mov x3,    c
-	rfn
-
-.fast:	mov x3,    [x3]
-	rfn
+	rfn c:x3,  c
 
 .crzn:	add x3,    1
 	mov x3,    [x3]
 	neg x3,    x3
 	mul c:x3,  c
 	neg x3,    c
-	rfn
+	rfn c:x3,  x3
 
 .crnz:	mov x3,    [x3]
 	neg x3,    x3
 	neg c,     c
 	mul c:x3,  c
 	neg x3,    c
-	rfn
+	rfn c:x3,  x3
 
 
 
@@ -235,8 +230,7 @@ us_tfreq_i:
 	rfn
 
 .fast:	mov c,     [x3]		; High
-	mov x3,    [x3]		; Low
-	rfn
+	rfn x3,    [x3]		; Low
 
 
 
@@ -263,9 +257,8 @@ us_rec16_i:
 	mul c,     x3
 	xeq c,     [$.inp]
 	rfn
-	mov c,     0
 	add x3,    1
-	rfn
+	rfn c:x3,  x3
 
 
 
@@ -738,7 +731,7 @@ us_sqrt16_i:
 	mov x3,    1
 	add c:[$.inp], x3	; Easier to compare this way
 	xeq c,     0
-	jms .ff			; However 0xFFFF needs special return
+	rfn c:x3,  0x00FF	; However 0xFFFF needs special return
 
 	mov c,      [$.inp]
 	mov x3,     0
@@ -795,10 +788,7 @@ us_sqrt16_i:
 	xug [$.inp], c
 	btc x3,    0
 
-	rfn
-
-.ff:	not x3,    0		; 0xFF return for max input
-	rfn
+	rfn c:x3,  x3
 
 
 
@@ -977,7 +967,7 @@ us_sqrt32_i:
 
 	mov a,     [$2]
 	mov b,     [$3]
-	rfn
+	rfn c:x3,  x3
 
-.ffff:	not x3,    0		; 0xFFFF return for max input
+.ffff:	mov x3,    0xFFFF	; 0xFFFF return for max input
 	jms .exit

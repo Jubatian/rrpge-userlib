@@ -76,4 +76,4 @@ us_dloff_clip_i:
 
 	and x3,    [$.dls]
 	or  x3,    c
-	rfn
+	rfn c:x3,  x3

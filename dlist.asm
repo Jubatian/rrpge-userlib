@@ -37,7 +37,7 @@ us_dlist_setptr_i:
 
 	mov a,     [$.dld]
 	and a,     3		; Display list entry size
-	not d,     0x0003	; Loads 0xFFFC
+	mov d,     0xFFFC
 	shl d,     a
 	and d,     0x07FC	; Mask for display list offset
 	xbc [$.dld], 13		; Double scan?
@@ -90,7 +90,7 @@ us_dlist_setptr_i:
 	mov b,     [$4]
 	mov d,     [$5]
 	mov x0,    [$6]
-	rfn
+	rfn c:x3,  x3
 
 
 
@@ -160,7 +160,7 @@ us_dlist_add_i:
 
 	; Add new graphics element to each line.
 
-	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov c,     0xFFFC	; Loads 0xFFFC (to discard low 2 bits of height)
 	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
 	and c,     [$.hgt]	; Note: Zero height is also OK
 	and a,     [$.hgt]
@@ -191,7 +191,7 @@ us_dlist_add_i:
 
 	mov a,     [$7]
 	mov d,     [$8]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -324,7 +324,7 @@ us_dlist_addbg_i:
 
 	; Add new graphics element to each line.
 
-	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov c,     0xFFFC	; Loads 0xFFFC (to discard low 2 bits of height)
 	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
 	and c,     [$.hgt]	; Note: Zero height is also OK
 	and a,     [$.hgt]
@@ -350,7 +350,7 @@ us_dlist_addbg_i:
 
 	mov a,     [$5]
 	mov d,     [$6]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -404,7 +404,7 @@ us_dlist_addlist_i:
 
 	; Add new graphics element to each line.
 
-	not c,     0x0003	; Loads 0xFFFC (to discard low 2 bits of height)
+	mov c,     0xFFFC	; Loads 0xFFFC (to discard low 2 bits of height)
 	mov a,     0x0003	; Loads 0x0003 (to retrieve low 2 bits of height)
 	and c,     [$.hgt]	; Note: Zero height is also OK
 	and a,     [$.hgt]
@@ -435,7 +435,7 @@ us_dlist_addlist_i:
 .exit:	; Restore CPU regs & exit
 
 	mov a,     [$6]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -450,7 +450,7 @@ us_dlist_clear_i:
 
 	mov c,     [$.dld]
 	and c,     3		; Display list entry size
-	not x3,    0x0003	; Loads 0xFFFC
+	mov x3,    0xFFFC
 	shl x3,    c
 	and x3,    0x07FC	; Mask for display list offset
 
@@ -465,4 +465,4 @@ us_dlist_clear_i:
 
 	; All cleared
 
-	rfn
+	rfn c:x3,  0

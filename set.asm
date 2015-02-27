@@ -92,7 +92,7 @@ us_set_p_i:
 
 	mov a,     [$0]
 	mov xm3,   PTR16I
-	rfn
+	rfn c:x3,  0
 
 
 

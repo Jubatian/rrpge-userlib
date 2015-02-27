@@ -119,8 +119,8 @@ us_dbuf_i_dlfix:
 .dls	equ	0		; Display list definition to fix
 
 	jfa us_dloff_clip {[$.dls]}
-	mov c,     [P_GDG_DLDEF]
-	and c,     0x3000	; Display mode flags
+	mov c,     0x3000	; Display mode flags
+	and c,     [P_GDG_DLDEF]
 	or  x3,    c		; Add them to the fixed display list definition
 	rfn
 
@@ -145,7 +145,7 @@ us_dbuf_init_i:
 
 	mov [us_dbuf_dl], x3
 	and x3,    3
-	not c,     0x0003	; Load 0xFFFC
+	mov c,     0xFFFC
 	and [$.dl2], c
 	or  [$.dl2], x3
 	jfa us_dbuf_i_dlfix {[$.dl2]}
@@ -229,8 +229,7 @@ us_dbuf_getlist_i:
 
 .exit:	; Return the current work display list
 
-	mov x3,    [us_dbuf_wl]
-	rfn
+	rfn c:x3,  [us_dbuf_wl]
 
 	; Wait frame end, then call frame hooks
 
@@ -264,7 +263,7 @@ us_dbuf_addfliphook_i:
 
 .exit:	; Done, added (or not added)
 
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -311,7 +310,7 @@ us_dbuf_remfliphook_i:
 
 	mov xm,    [$0]
 	mov x2,    [$1]
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -337,7 +336,7 @@ us_dbuf_addframehook_i:
 
 .exit:	; Done, added (or not added)
 
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -383,7 +382,7 @@ us_dbuf_addinithook_i:
 
 .exit:	; Done, added (or not added)
 
-	rfn
+	rfn c:x3,  0
 
 
 

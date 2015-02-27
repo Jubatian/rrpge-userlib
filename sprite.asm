@@ -77,7 +77,7 @@ us_sprite_reset_i:
 
 	; Done
 
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -89,12 +89,12 @@ us_sprite_setbounds_i:
 .cls	equ	0		; Start column
 .clc	equ	1		; Count of columns
 
-	mov c,     [$.cls]
-	mov [us_sprite_cs], c
-	mov c,     [$.clc]
-	mov [us_sprite_cc], c
+	mov x3,    [$.cls]
+	mov [us_sprite_cs], x3
+	mov x3,    [$.clc]
+	mov [us_sprite_cc], x3
 	btc [us_sprite_df], 0	; Mark dirty
-	rfn
+	rfn x3,    0
 
 
 

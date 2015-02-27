@@ -39,7 +39,7 @@ us_tile_new_i:
 	mov [x3],  c
 	mov c,     [$.afn]
 	mov [x3],  c
-	rfn
+	rfn c:x3,  x3
 
 
 

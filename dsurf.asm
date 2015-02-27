@@ -65,7 +65,7 @@ us_dsurf_new_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -98,7 +98,7 @@ us_dsurf_newdbuf_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -130,7 +130,7 @@ us_dsurf_newm_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -166,7 +166,7 @@ us_dsurf_newmdbuf_i:
 	mov [x3],  c		; Surface A & B partition select
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -184,8 +184,7 @@ us_dsurf_get_i:
 	add x3,    3		; Selects A or B bank select
 	mov c,     [x3]		; Bank
 	add x3,    1
-	mov x3,    [x3]		; Partition
-	rfn
+	rfn x3,    [x3]		; Partition
 
 
 
@@ -256,4 +255,4 @@ us_dsurf_flip_i:
 
 	mov c,     1
 	xor [us_dsurf_ff], c
-	rfn
+	rfn c:x3,  0

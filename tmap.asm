@@ -76,7 +76,7 @@ us_tmap_new_i:
 	mov [x3],  c
 	mov c,     [$.ofl]
 	mov [x3],  c
-	rfn
+	rfn c:x3,  0
 
 
 
@@ -376,7 +376,7 @@ us_tmap_blit_i:
 	mov x0,    [$x3]
 	mov x1,    [$x3]
 	mov x2,    [$x3]
-	rfn
+	rfn c:x3,  0
 
 .col:	; Column blit (width is set 1)
 
@@ -538,10 +538,9 @@ us_tmap_gettile_i:
 	mov c,     2
 	mov [P3_DS], c
 
-	mov x3,    [P3_RW_NI]	; Read tile data
 	mov a,     [$0]		; Restore CPU register
 	mov b,     [$2]		; Restore CPU register
-	rfn
+	rfn c:x3,  [P3_RW_NI]	; Read tile data
 
 
 
@@ -587,7 +586,7 @@ us_tmap_settile_i:
 	mov [P3_RW_NI], x3	; Set tile data
 	mov a,     [$0]		; Restore CPU register
 	mov b,     [$2]		; Restore CPU register
-	rfn
+	rfn c:x3,  0
 
 
 

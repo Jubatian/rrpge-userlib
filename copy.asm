@@ -116,7 +116,7 @@ us_copy_pfc_i:
 	mov a,     [$0]
 	mov x2,    [$1]
 	mov xm,    [$2]
-	rfn
+	rfn c:x3,  0
 
 
 
