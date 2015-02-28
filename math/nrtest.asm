@@ -2,7 +2,7 @@
 ; RRPGE User Library 32 bit reciprocal test
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -32,8 +32,8 @@ include "rrpge.asm"
 
 AppAuth db "Jubatian"
 AppName db "ULTest: 32 bit reciprocal"
-Version db "00.000.000"
-EngSpec db "00.013.005"
+Version db "00.000.001"
+EngSpec db "00.016.000"
 License db "RRPGEvt", "\n"
         db 0
 
@@ -42,7 +42,7 @@ section code
 	; Switch to 640x400, 16 color mode, and create an appropriate display
 	; list for a 80 column wide display starting at PRAM bank 0.
 
-	jsv {kc_vid_mode, 0}
+	jsv kc_vid_mode {0}
 	jfa us_dlist_sb_add {0x0000, 0xC000, 400, 1, 0}
 
 	; In 'x0' and 'x1' do some timing using the 187.5Hz clock, to count

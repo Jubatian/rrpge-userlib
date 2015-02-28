@@ -121,7 +121,7 @@ us_smux_setptr_i:
 	mov a,     [$2]
 	mov b,     [$3]
 	mov d,     [$4]
-	rfn c:x3,  0
+	rfn c:x3,  x3
 
 
 

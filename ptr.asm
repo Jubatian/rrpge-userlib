@@ -45,13 +45,11 @@ us_ptr_setgen_i:
 	mov [x3],  c		; Increment low
 	mov c,     [$.dus]
 	mov [x3],  c		; Data unit size
-	add x3,    1		; To register Px_RW_NI
-	mov c,     x3		; Return: Px_RW_NI
-	add x3,    1		; Return: Px_RW
+	add x3,    2		; To register Px_RW
 
 	; Done
 
-	rfn
+	rfn c:x3,  x3
 
 
 
@@ -98,9 +96,7 @@ us_ptr_setgenwi_i:
 	mov [x3],  x0		; Increment high
 	mov [x3],  x1		; Increment low
 	mov [x3],  c		; Data unit size
-	add x3,    1		; To register Px_RW_NI
-	mov c,     x3		; Return: Px_RW_NI
-	add x3,    1		; Return: Px_RW
+	add x3,    2		; To register Px_RW
 
 	; Restore & exit
 
@@ -108,7 +104,7 @@ us_ptr_setgenwi_i:
 	mov b,     [$.adl]
 	mov x0,    [$.inh]
 	mov x1,    [$.inl]
-	rfn
+	rfn c:x3,  x3
 
 
 
@@ -174,15 +170,13 @@ us_ptr_setwi_i:
 	shl a,     b		; Increment: 1, 2, 4, 8 or 16 (bits)
 	mov [x3],  a		; Increment low
 	mov [x3],  c		; Data unit size
-	add x3,    1		; To register Px_RW_NI
-	mov c,     x3		; Return: Px_RW_NI
-	add x3,    1		; Return: Px_RW
+	add x3,    2		; To register Px_RW
 
 	; Restore & exit
 
 	mov a,     [$.adh]
 	mov b,     [$.adl]
-	rfn
+	rfn c:x3,  x3
 
 
 

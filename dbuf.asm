@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Double buffering functions
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -196,7 +196,7 @@ us_dbuf_flip_i:
 	; Wait for the Graphics FIFO to drain
 
 	jms .lpe
-.lp:	jsv {kc_dly_delay, 5000}
+.lp:	jsv kc_dly_delay {5000}
 .lpe:	xbc [P_GFIFO_STAT], 0	; FIFO is non-empty or peripheral is working
 	jms .lp
 
@@ -233,7 +233,7 @@ us_dbuf_getlist_i:
 
 	; Wait frame end, then call frame hooks
 
-.lp:	jsv {kc_dly_delay, 5000}
+.lp:	jsv kc_dly_delay {5000}
 .lpe:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
 	jms .lp
 	jfa us_dbuf_i_framecall
