@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Destination surfaces
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -17,14 +17,14 @@
 ;
 ; Uses surface structures (objects) of the following layout:
 ;
-; Word0: PRAM Write mask for the surface, high (for 0x8000)
-; Word1: PRAM Write mask for the surface, low (for 0x8001)
-; Word2: Surface A bank select (for 0x8002)
-; Word3: Surface B bank select (for 0x8002)
-; Word4: Surface A partition select (for 0x8003)
-; Word5: Surface B partition select (for 0x8003)
-; Word6: Width of destination in cells (for 0x8004)
-; Word7: Partition size (only destination, for 0x8014)
+; Word0: PRAM Write mask for the surface, high (for 0x0000)
+; Word1: PRAM Write mask for the surface, low (for 0x0001)
+; Word2: Surface A bank select (for 0x0002)
+; Word3: Surface B bank select (for 0x0002)
+; Word4: Surface A partition select (for 0x0003)
+; Word5: Surface B partition select (for 0x0003)
+; Word6: Width of destination in cells (for 0x0004)
+; Word7: Partition size (only destination, for 0x0014)
 ;
 
 include "rrpge.asm"
@@ -197,7 +197,7 @@ us_dsurf_getacc_i:
 	jfa us_dbuf_getlist_i	; Wait for frame end if necessary
 
 	mov x3,    [$.srp]
-	mov c,     0x8000
+	mov c,     0x0000
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
 	mov [P_GFIFO_DATA], c	; Write mask, high

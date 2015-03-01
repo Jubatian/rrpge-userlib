@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Basic tileset
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -88,30 +88,30 @@ us_btile_acc_i:
 
 	mov x3,    [$.srp]
 	add x3,    3
-	mov c,     0x800A
+	mov c,     0x000A
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
 	mov [$0],  c		; Save width for later uses
-	mov [P_GFIFO_DATA], c	; 0x800A: Pointer X post-add whole
-	mov c,     0x8017
+	mov [P_GFIFO_DATA], c	; 0x000A: Pointer X post-add whole
+	mov c,     0x0017
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
-	mov [P_GFIFO_DATA], c	; 0x8017: Count of rows to blit
+	mov [P_GFIFO_DATA], c	; 0x0017: Count of rows to blit
 	mul c,     [$0]		; Tile index multiplier
 	mov [us_tile_imul], c
 	mov c,     [$0]
-	mov [P_GFIFO_DATA], c	; 0x8018: Count of cells to blit, whole
+	mov [P_GFIFO_DATA], c	; 0x0018: Count of cells to blit, whole
 	mov c,     0
-	mov [P_GFIFO_DATA], c	; 0x8019: Count of cells to blit, fraction
+	mov [P_GFIFO_DATA], c	; 0x0019: Count of cells to blit, fraction
 
-	mov c,     0x8012
+	mov c,     0x0012
 	mov [P_GFIFO_ADDR], c
 	mov c,     [x3]
-	mov [P_GFIFO_DATA], c	; 0x8012: Source bank select
+	mov [P_GFIFO_DATA], c	; 0x0012: Source bank select
 	mov c,     0		; No partitioning on source
-	mov [P_GFIFO_DATA], c	; 0x8013: Source partition select
+	mov [P_GFIFO_DATA], c	; 0x0013: Source partition select
 	mov c,     0xFF00
-	mov [P_GFIFO_DATA], c	; 0x8014: Source partitioning settings
+	mov [P_GFIFO_DATA], c	; 0x0014: Source partitioning settings
 	mov c,     [x3]
 	mov [us_tile_moff], c
 	mov c,     [x3]
@@ -121,7 +121,7 @@ us_btile_acc_i:
 
 	mov x3,    c
 	and x3,    0x001F	; VBT, VCK, Pixel barrel rot; BB is zero, OK
-	mov [P_GFIFO_DATA], x3	; 0x8015: Blit control flags & src. barrel rot
+	mov [P_GFIFO_DATA], x3	; 0x0015: Blit control flags & src. barrel rot
 	mov [$0],  c
 	shr c,     8
 	bts c,     0		; AND mask lowest bit is always 1
@@ -129,7 +129,7 @@ us_btile_acc_i:
 	shl x3,    8
 	xbc [$0],  8
 	or  x3,    c		; If bit8 was set, then colorkey is AND mask
-	mov [P_GFIFO_DATA], x3	; 0x8016: AND mask and Colorkey
+	mov [P_GFIFO_DATA], x3	; 0x0016: AND mask and Colorkey
 
 	rfn c:x3,  0
 
@@ -144,15 +144,15 @@ us_btile_blit_i:
 .ofh	equ	2		; Destination offset, high
 .ofl	equ	3		; Destination offset, low
 
-	mov x3,    0x801C
+	mov x3,    0x001C
 	mov [P_GFIFO_ADDR], x3
 
 	mov c,     [$.ofh]
-	mov [P_GFIFO_DATA], c	; 0x801C: Destination whole
+	mov [P_GFIFO_DATA], c	; 0x001C: Destination whole
 	mov c,     0
 	xug 4,     sp		; Fraction is zero unless parameter is provided
 	mov c,     [$.ofl]
-	mov [P_GFIFO_DATA], c	; 0x801D: Destination fraction
+	mov [P_GFIFO_DATA], c	; 0x001D: Destination fraction
 
 .entr:	mov c,     [us_tile_mtil]
 	and c,     0x7		; Low 3 bits
@@ -240,13 +240,13 @@ us_btile_blit_i:
 
 .tic:	mul c,     [us_tile_imul]
 	add c,     [us_tile_moff]
-	mov x3,    0x801A
+	mov x3,    0x001A
 	mov [P_GFIFO_ADDR], x3
-	mov [P_GFIFO_DATA], c	; 0x801A: Source X whole
+	mov [P_GFIFO_DATA], c	; 0x001A: Source X whole
 
-	mov c,     0x801F
+	mov c,     0x001F
 	mov [P_GFIFO_ADDR], c
-	mov [P_GFIFO_DATA], c	; 0x801F: Start trigger
+	mov [P_GFIFO_DATA], c	; 0x001F: Start trigger
 
 	rfn c:x3,  0
 
