@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Fast scrolling tile map
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -652,8 +652,7 @@ us_fastmap_draw_i:
 	add x1,    1
 	xne x1,    [$.swr]
 	sub x1,    [$.slr]
-.lt0:	xeq c,     0
-	jms .llp
+.lt0:	jnz c,     .llp
 
 	; Restore CPU regs & exit
 

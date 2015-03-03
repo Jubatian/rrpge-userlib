@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Display List low level assistance
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -184,8 +184,7 @@ us_dlist_add_i:
 .lt1:	mov [P2_RW], a
 	mov [P3_RW], d
 	add a,     [$.mul]
-.lt0:	xeq c,     0
-	jms .lp
+.lt0:	jnz c,     .lp
 
 .exit:	; Restore CPU regs & exit
 
@@ -343,8 +342,7 @@ us_dlist_addbg_i:
 	mov [P3_RW], d
 .lt1:	mov [P2_RW], a
 	mov [P3_RW], d
-.lt0:	xeq c,     0
-	jms .lp
+.lt0:	jnz c,     .lp
 
 .exit:	; Restore CPU regs & exit
 
@@ -429,8 +427,7 @@ us_dlist_addlist_i:
 	mov [P2_RW], a
 	mov a,     [P1_RW]
 	mov [P3_RW], a
-.lt0:	xeq c,     0
-	jms .lp
+.lt0:	jnz c,     .lp
 
 .exit:	; Restore CPU regs & exit
 

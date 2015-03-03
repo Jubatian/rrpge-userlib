@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Math functions
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -75,8 +75,7 @@ us_div32_i:
 	; member will contribute to carry.
 
 	mov c,     [$.o2h]
-	xeq c,     0
-	jms .l0
+	jnz c,     .l0
 	mov c,     [$.o2l]
 	xne c,     1
 	jms .l1			; For a divisor of 1, special return
@@ -282,8 +281,7 @@ us_rec32_i:
 
 	; Main branch out, favoring the most expensive paths first
 
-	xeq b,     0
-	jms .brh
+	jnz b,     .brh
 	xug a,     0x0100
 	jms .brb		; Region 0x00000000 - 0x00000100
 	xug a,     0x4000

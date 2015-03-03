@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Copy
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -107,8 +107,7 @@ us_copy_pfc_i:
 	mov a,     [x3]
 	mov [x2],  a
 	sub c,     8
-	xeq c,     0
-	jms .lp			; About 10cy/copy even for PRAM<=>PRAM.
+	jnz c,     .lp		; About 10cy/copy even for PRAM<=>PRAM.
 .le:
 
 	; Restore & Exit
