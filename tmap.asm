@@ -451,9 +451,9 @@ us_tmap_blit_i:
 	add c,     1
 	xug [$.tmh], c
 	jms .tyw
-.tywe:	mov [$.tly], c		; Tile map Y updated OK
+	mov [$.tly], c		; Tile map Y updated OK
 
-	mov c,     [$.yps]
+.tywe:	mov c,     [$.yps]
 	add c,     [us_tmap_th]
 	xug [$.tdh], c
 	sub c,     [$.tdh]
@@ -467,6 +467,7 @@ us_tmap_blit_i:
 .tyw:	; Tilemap Y wraparound
 
 	sub c,     [$.tmh]
+	mov [$.tly], c
 	sub c:[P3_AL], a
 	sbc [P3_AH], b
 	jms .tywe

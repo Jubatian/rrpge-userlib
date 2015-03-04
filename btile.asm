@@ -64,11 +64,11 @@ us_btile_new_i:
 .off	equ	4		; Offset (tile index 0) of tile source
 .cfg	equ	5		; Blit configuration
 
-	jfa us_tile_new_i {us_btile_blit, us_btile_gethw, us_btile_acc}
+	jfa us_tile_new_i {[$.tgp], us_btile_blit, us_btile_gethw, us_btile_acc}
 
 	mov c,     [$.wdt]
 	mov [x3],  c		; Width of tiles
-	or  c,     [$.hgt]
+	mov c,     [$.hgt]
 	mov [x3],  c		; Height of tiles
 	mov c,     [$.bnk]
 	mov [x3],  c		; Bank select

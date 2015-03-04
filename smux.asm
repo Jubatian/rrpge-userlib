@@ -522,7 +522,7 @@ us_smux_addlist_i:
 	jms .exit		; Turned negative: off screen to the top
 	shl a,     1		; To command list offset
 	sub c:[$.cll], a
-	sub [$.clh], c		; Adjust command list start
+	add [$.clh], c		; Adjust command list start (carry is 0xFFFF on borrow)
 	mov a,     0
 	mov [$.psy], a		; New Y start (0)
 .ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
