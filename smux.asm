@@ -35,13 +35,9 @@ section code
 
 ; 0xF800 - 0xF98F: Occupation data
 us_smux_ola	equ	0xF800
-us_smux_ola8	equ	0xF000	; us_smux_ola << 1
 us_smux_ole	equ	0xF8C8
-us_smux_ole8	equ	0xF190	; us_smux_ole << 1
 us_smux_oha	equ	0xF8C8
-us_smux_oha8	equ	0xF190	; us_smux_oha << 1
 us_smux_ohe	equ	0xF990
-us_smux_ohe8	equ	0xF320	; us_smux_ohe << 1
 ; 0xFACF: Column to start at
 us_smux_cs	equ	0xFACF
 ; 0xFACE: Count of columns
@@ -58,7 +54,7 @@ us_smux_df	equ	0xFACD
 ; Param0: Display List Definition
 ; Ret.X3: Display list row size in bits (used to advance rows)
 ;
-; The display list pointer is set up to stationary 16 bits.
+; The display list pointer is set up to incrementing 16 bits.
 ;
 us_smux_setptr_i:
 
@@ -98,23 +94,20 @@ us_smux_setptr_i:
 	add c:d,   [$.psy]
 	add b,     c		; Start offset in b:d acquired
 
-	; Prepare PRAM pointer fill. In 'c' prepares a zero for incr. high
-
-	mov [$.shf], a		; Save shift for generating return
-	mov c,     0
-	mov a,     4		; 16 bit pointer, always increment
-
 	; Fill PRAM pointer 3
 
 	mov x3,    P3_AH
 	mov [x3],  b		; P3_AH
 	mov [x3],  d		; P3_AL
+	mov c,     0
 	mov [x3],  c		; P3_IH
+	mov c,     16		; 16 bit increments
 	mov [x3],  c		; P3_IL
-	mov [x3],  a		; P3_DS
+	mov c,     4		; 16 bit pointer
+	mov [x3],  c		; P3_DS
 
 	mov x3,    1
-	shl x3,    [$.shf]	; Return value (display list size in bits)
+	shl x3,    a		; Return value (display list size in bits)
 
 	; Restore CPU regs & exit
 
@@ -244,7 +237,7 @@ us_smux_add_i:
 	mov [$11], x1
 	mov [$12], x2
 	mov [$13], xm
-	mov [$14], xh
+	mov [$14], xb
 
 	; Load display list definition
 
@@ -300,11 +293,14 @@ us_smux_add_i:
 
 	; Set up X0 and X1 for pointing into the occupation data
 
-	mov xh,    0x1111	; 8 bit pointers, they are on the high end
-	mov x0,    us_smux_ola8
-	add x0,    [$.psy]	; Low bounds offset
-	mov x1,    x0
-	add x1,    400		; High bounds offset
+	mov xb,    0x0000	; Low bits of 8 bit pointers: even
+	xbc [$.psy], 0
+	mov xb,    0x8888	; Start position is odd
+	mov x0,    [$.psy]
+	shr x0,    1		; To word offset
+	add x0,    us_smux_ola	; Low bounds offset
+	mov x1,    200
+	add x1,    x0		; High bounds offset
 
 	; Init data to add
 
@@ -314,10 +310,8 @@ us_smux_add_i:
 	; Loop init (in x3 the add value for display list row walking was
 	; prepared by us_smux_setptr_i)
 
-	add [$.hgt], x0		; Top bound by offset
-	mov d,     x3
-	mov x2,    P3_AL
-	mov x3,    P3_RW
+	mov x2,    [$.hgt]
+	mov d,     [P3_AL]	; Tracks P3_AL during the loop
 	xbc [$.btp], 0		; Add to bottom if 0
 	jms .t			; Add to top if 1
 
@@ -328,24 +322,22 @@ us_smux_add_i:
 	xne c,     [x1]
 	jms .lxb		; Equal column offsets: row has no more sprites free
 	shl c,     5		; Bit offset of display list column
-	xch [x2],  c		; Save original P3_AL to restore it after the add
-	add [x2],  c		; To high word of display list column entry
-	mov [x3],  a
-	bts [x2],  4		; To low word of display list column entry
-	mov [x3],  b
-	mov [x2],  c
+	add c,     d
+	mov [P3_AL], c
+	mov [P3_RW], a
 	mov c,     1
+	mov [P3_RW_NI], b	; Avoid address low wraparound
 	add [x0],  c
-.leb:	add c:[x2], d
+.leb:	add c:d,   x3
 	add [P3_AH], c
 	add a,     [$.mul]
-	xeq x0,    [$.hgt]
-	jms .lpb
+	sub x2,    1
+	jnz x2,    .lpb
 	jms .exit
 
-.lxb:	add x0,    1
+.lxb:	mov [x0],  c		; Just to increment x0:xb0
 	jms .leb
-.lxt:	add x1,    1
+.lxt:	mov [x1],  c		; Just to increment x1:xb1
 	jms .let
 
 .t:	; Add to top end
@@ -357,17 +349,15 @@ us_smux_add_i:
 	sub c,     1
 	mov [x1],  c
 	shl c,     5		; Bit offset of display list column
-	xch [x2],  c		; Save original P3_AL to restore it after the add
-	add [x2],  c		; To high word of display list column entry
-	mov [x3],  a
-	bts [x2],  4		; To low word of display list column entry
-	mov [x3],  b
-	mov [x2],  c
-.let:	add c:[x2], d
+	add c,     d
+	mov [P3_AL], c
+	mov [P3_RW], a
+	mov [P3_RW_NI], b	; Avoid address low wraparound
+.let:	add c:d,   x3
 	add [P3_AH], c
 	add a,     [$.mul]
-	xeq x0,    [$.hgt]
-	jms .lpt
+	sub x2,    1
+	jnz x2,    .lpt
 
 .exit:	; Restore CPU regs & exit
 
@@ -378,7 +368,7 @@ us_smux_add_i:
 	mov x1,    [$11]
 	mov x2,    [$12]
 	mov xm,    [$13]
-	mov xh,    [$14]
+	mov xb,    [$14]
 	rfn c:x3,  0
 
 
@@ -408,7 +398,7 @@ us_smux_addxy_i:
 	mov [$11], x1
 	mov [$12], x2
 	mov [$13], xm
-	mov [$14], xh
+	mov [$14], xb
 
 	; Push stuff around a bit to make it right for jumping into
 	; us_dlist_add_i: load X position in A, and fill the Y position in
@@ -500,7 +490,7 @@ us_smux_addlist_i:
 	mov [$10], x1
 	mov [$11], x2
 	mov [$12], xm
-	mov [$13], xh
+	mov [$13], xb
 
 	; Load display list definition
 
@@ -545,19 +535,20 @@ us_smux_addlist_i:
 
 	; Set up X0 and X1 for pointing into the occupation data
 
-	mov xh,    0x1111	; 8 bit pointers, they are on the high end
-	mov x0,    us_smux_ola8
-	add x0,    [$.psy]	; Low bounds offset
-	mov x1,    x0
-	add x1,    400		; High bounds offset
+	mov xb,    0x0000	; Low bits of 8 bit pointers: even
+	xbc [$.psy], 0
+	mov xb,    0x8888	; Start position is odd
+	mov x0,    [$.psy]
+	shr x0,    1		; To word offset
+	add x0,    us_smux_ola	; Low bounds offset
+	mov x1,    200
+	add x1,    x0		; High bounds offset
 
 	; Loop init (in x3 the add value for display list row walking was
 	; prepared by us_smux_setptr_i)
 
-	add [$.hgt], x0		; Top bound by offset
-	mov d,     x3
-	mov x2,    P3_AL
-	mov x3,    P3_RW
+	mov x2,    [$.hgt]
+	mov d,     [P3_AL]	; Tracks P3_AL during the loop
 	xbc [$.btp], 0		; Add to bottom if 0
 	jms .t			; Add to top if 1
 
@@ -570,23 +561,21 @@ us_smux_addlist_i:
 	xne c,     [x1]
 	jms .lxb		; Equal column offsets: row has no more sprites free
 	shl c,     5		; Bit offset of display list column
-	xch [x2],  c		; Save original P3_AL to restore it after the add
-	add [x2],  c		; To high word of display list column entry
-	mov [x3],  a
-	bts [x2],  4		; To low word of display list column entry
-	mov [x3],  b
-	mov [x2],  c
+	add c,     d
+	mov [P3_AL], c
+	mov [P3_RW], a
 	mov c,     1
+	mov [P3_RW_NI], b	; Avoid address low wraparound
 	add [x0],  c
-.leb:	add c:[x2], d
+.leb:	add c:d,   x3
 	add [P3_AH], c
-	xeq x0,    [$.hgt]
-	jms .lpb
+	sub x2,    1
+	jnz x2,    .lpb
 	jms .exit
 
-.lxb:	add x0,    1
+.lxb:	mov [x0],  c		; Just to increment x0:xb0
 	jms .leb
-.lxt:	add x1,    1
+.lxt:	mov [x1],  c		; Just to increment x1:xb1
 	jms .let
 
 .t:	; Add to top end
@@ -600,16 +589,14 @@ us_smux_addlist_i:
 	sub c,     1
 	mov [x1],  c
 	shl c,     5		; Bit offset of display list column
-	xch [x2],  c		; Save original P3_AL to restore it after the add
-	add [x2],  c		; To high word of display list column entry
-	mov [x3],  a
-	bts [x2],  4		; To low word of display list column entry
-	mov [x3],  b
-	mov [x2],  c
-.let:	add c:[x2], d
+	add c,     d
+	mov [P3_AL], c
+	mov [P3_RW], a
+	mov [P3_RW_NI], b	; Avoid address low wraparound
+.let:	add c:d,   x3
 	add [P3_AH], c
-	xeq x0,    [$.hgt]
-	jms .lpt
+	sub x2,    1
+	jnz x2,    .lpt
 
 .exit:	; Restore CPU regs & exit
 
@@ -620,5 +607,5 @@ us_smux_addlist_i:
 	mov x1,    [$10]
 	mov x2,    [$11]
 	mov xm,    [$12]
-	mov xh,    [$13]
+	mov xb,    [$13]
 	rfn c:x3,  0
