@@ -125,6 +125,58 @@ org 0xE000				; Bottom of entry table
 	jma us_fastmap_getyx_i		; 0xE0D0 fastmap.asm
 	jma us_fastmap_setdly_i		; 0xE0D2 fastmap.asm
 	jma us_fastmap_draw_i		; 0xE0D4 fastmap.asm
+	jma us_cr_new_i			; 0xE0D6 ifcharr.asm
+	jma us_cr_setsi_i		; 0xE0D8 ifcharr.asm
+	jma us_cr_getnc_i		; 0xE0DA ifcharr.asm
+	jma us_cw_new_i			; 0xE0DC ifcharw.asm
+	jma us_cw_setnc_i		; 0xE0DE ifcharw.asm
+	jma us_cw_setst_i		; 0xE0E0 ifcharw.asm
+	jma us_cw_init_i		; 0xE0E2 ifcharw.asm
+	jma us_cwr_new_i		; 0xE0E4 ifcharw.asm
+	jma us_cwr_nextsi_i		; 0xE0E6 ifcharw.asm
+	jma us_utf32f8_i		; 0xE0E8 utf.asm
+	jma us_utf8f32_i		; 0xE0EA utf.asm
+	jma us_utf8len_i		; 0xE0EC utf.asm
+	jma us_idfutf32_i		; 0xE0EE utf.asm
+	jma us_cr_cbyte_new_i		; 0xE0F0 charr.asm
+	jma us_cr_cbyte_setsi_i		; 0xE0F2 charr.asm
+	jma us_cr_cbyte_getnc_i		; 0xE0F4 charr.asm
+	jma us_cr_pbyte_new_i		; 0xE0F6 charr.asm
+	jma us_cr_pbyte_setsb_i		; 0xE0F8 charr.asm
+	jma us_cr_pbyte_setsi_i		; 0xE0FA charr.asm
+	jma us_cr_pbyte_getnc_i		; 0xE0FC charr.asm
+	jma us_cr_cutf8_new_i		; 0xE0FE charr.asm
+	jma us_cr_cutf8_setsi_i		; 0xE100 charr.asm
+	jma us_cr_cutf8_getnc_i		; 0xE102 charr.asm
+	jma us_cr_putf8_new_i		; 0xE104 charr.asm
+	jma us_cr_putf8_setsb_i		; 0xE106 charr.asm
+	jma us_cr_putf8_setsi_i		; 0xE108 charr.asm
+	jma us_cr_putf8_getnc_i		; 0xE10A charr.asm
+	jma us_cwr_cbyte_new_i		; 0xE10C charw.asm
+	jma us_cwr_cbyte_newz_i		; 0xE10E charw.asm
+	jma us_cwr_cbyte_setnc_i	; 0xE110 charw.asm
+	jma us_cwr_cbyte_nextsi_i	; 0xE112 charw.asm
+	jma us_cwr_pbyte_new_i		; 0xE114 charw.asm
+	jma us_cwr_pbyte_newz_i		; 0xE116 charw.asm
+	jma us_cwr_pbyte_setnc_i	; 0xE118 charw.asm
+	jma us_cwr_pbyte_nextsi_i	; 0xE11A charw.asm
+	jma us_cwr_cutf8_new_i		; 0xE11C charw.asm
+	jma us_cwr_cutf8_newz_i		; 0xE11E charw.asm
+	jma us_cwr_cutf8_setnc_i	; 0xE120 charw.asm
+	jma us_cwr_cutf8_nextsi_i	; 0xE122 charw.asm
+	jma us_cwr_putf8_new_i		; 0xE124 charw.asm
+	jma us_cwr_putf8_newz_i		; 0xE126 charw.asm
+	jma us_cwr_putf8_setnc_i	; 0xE128 charw.asm
+	jma us_cwr_putf8_nextsi_i	; 0xE12A charw.asm
+	jma us_cw_tile_new_i		; 0xE12C charwt.asm
+	jma us_cw_tile_setnc_i		; 0xE12E charwt.asm
+	jma us_cw_tile_setst_i		; 0xE130 charwt.asm
+	jma us_cw_tile_init_i		; 0xE132 charwt.asm
+	jma us_cw_tile_setxy_i		; 0xE134 charwt.asm
+	jma us_ftile_new_i		; 0xE136 ftile.asm
+	jma us_ftile_acc_i		; 0xE138 ftile.asm
+	jma us_ftile_blit_i		; 0xE13A ftile.asm
+	jma us_ftile_gethw_i		; 0xE13C ftile.asm
 
 
 
@@ -147,3 +199,10 @@ include "iftile.asm"
 include "btile.asm"
 include "tmap.asm"
 include "fastmap.asm"
+include "ifcharr.asm"
+include "ifcharw.asm"
+include "charr.asm"
+include "charw.asm"
+include "charwt.asm"
+include "utf.asm"
+include "ftile.asm"
