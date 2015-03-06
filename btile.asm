@@ -12,9 +12,9 @@
 ;
 ; Uses the following CPU RAM locations:
 ;
-; 0xFABC: Tile index multiplier
-; 0xFABD: Memorized tile index layout (by us_tile_getacc, low 3 bits)
-; 0xFABE: Memorized tile start offset (by us_tile_getacc)
+; 0xFDBC: Tile index multiplier
+; 0xFDBD: Memorized tile index layout (by us_tile_getacc, low 3 bits)
+; 0xFDBE: Memorized tile start offset (by us_tile_getacc)
 ;
 ; Uses tileset structures (objects) of the following layout:
 ;
@@ -44,12 +44,12 @@ section code
 
 
 
-; 0xFABC: Tile index multiplier
-us_tile_imul	equ	0xFABC
-; 0xFABD: Memorized tile index layout
-us_tile_mtil	equ	0xFABD
-; 0xFABE: Memorized tile start offset
-us_tile_moff	equ	0xFABE
+; 0xFDBC: Tile index multiplier
+us_tile_imul	equ	0xFDBC
+; 0xFDBD: Memorized tile index layout
+us_tile_mtil	equ	0xFDBD
+; 0xFDBE: Memorized tile start offset
+us_tile_moff	equ	0xFDBE
 
 
 

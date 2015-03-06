@@ -14,10 +14,10 @@
 ; columns.
 ;
 ; Uses the following CPU RAM locations:
-; 0xF800 - 0xF98F: Occupation data
-; 0xFACF: First column to use.
-; 0xFACE: Count of columns to use.
-; 0xFACD: Bit0: if clear, indicates the occupation data is dirty.
+; 0xFB00 - 0xFC8F: Occupation data
+; 0xFDCF: First column to use.
+; 0xFDCE: Count of columns to use.
+; 0xFDCD: Bit0: if clear, indicates the occupation data is dirty.
 ;
 ; Also adds a Page flip hook (to clear the occupation data).
 ;
@@ -33,17 +33,17 @@ section code
 
 
 
-; 0xF800 - 0xF98F: Occupation data
-us_smux_ola	equ	0xF800
-us_smux_ole	equ	0xF8C8
-us_smux_oha	equ	0xF8C8
-us_smux_ohe	equ	0xF990
-; 0xFACF: Column to start at
-us_smux_cs	equ	0xFACF
-; 0xFACE: Count of columns
-us_smux_cc	equ	0xFACE
-; 0xFACD: Dirty flag on bit 0: clear if dirty.
-us_smux_df	equ	0xFACD
+; 0xFB00 - 0xFC8F: Occupation data
+us_smux_ola	equ	0xFB00
+us_smux_ole	equ	0xFBC8
+us_smux_oha	equ	0xFBC8
+us_smux_ohe	equ	0xFC90
+; 0xFDCF: Column to start at
+us_smux_cs	equ	0xFDCF
+; 0xFDCE: Count of columns
+us_smux_cc	equ	0xFDCE
+; 0xFDCD: Dirty flag on bit 0: clear if dirty.
+us_smux_df	equ	0xFDCD
 
 
 

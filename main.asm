@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Main
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -177,6 +177,7 @@ org 0xE000				; Bottom of entry table
 	jma us_ftile_acc_i		; 0xE138 ftile.asm
 	jma us_ftile_blit_i		; 0xE13A ftile.asm
 	jma us_ftile_gethw_i		; 0xE13C ftile.asm
+	jma us_ftile_setch		; 0xE13E ftile.asm
 
 
 

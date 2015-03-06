@@ -11,15 +11,15 @@
 ; Provides management for double buffering to simplify this process.
 ;
 ; Uses the following CPU RAM locations:
-; 0xFAFF: Current display buffer display list offset
-; 0xFAFE: Current work buffer display list offset
-; 0xFAF0 - 0xFAFD: Page flip hooks (functions to call when flipping pages)
-; 0xFAEF: Absolute offset of first free slot in flip hooks
-; 0xFAEE: Absolute offset of first free slot in frame hooks
-; 0xFAE0 - 0xFAED: Frame end hooks (functions to call when frame ends)
-; 0xFADE: Flip performed flag (indicates the need to call frame hooks)
-; 0xFADF: Absolute offset of first free slot in init hooks
-; 0xFAD0 - 0xFADD: Init hooks (functions to call when initializing)
+; 0xFDFF: Current display buffer display list offset
+; 0xFDFE: Current work buffer display list offset
+; 0xFDF0 - 0xFDFD: Page flip hooks (functions to call when flipping pages)
+; 0xFDEF: Absolute offset of first free slot in flip hooks
+; 0xFDEE: Absolute offset of first free slot in frame hooks
+; 0xFDE0 - 0xFDED: Frame end hooks (functions to call when frame ends)
+; 0xFDDE: Flip performed flag (indicates the need to call frame hooks)
+; 0xFDDF: Absolute offset of first free slot in init hooks
+; 0xFDD0 - 0xFDDD: Init hooks (functions to call when initializing)
 ;
 
 
@@ -30,27 +30,27 @@ section code
 
 
 
-; 0xFAFF: Current display buffer display list offset
-us_dbuf_dl	equ	0xFAFF
-; 0xFAEE: Current work buffer display list offset
-us_dbuf_wl	equ	0xFAFE
-; 0xFAF0 - 0xFAFD: Page flip hooks (functions to call when flipping pages)
-us_dbuf_flpa	equ	0xFAF0
-us_dbuf_flpe	equ	0xFAFE
-; 0xFAEF: Absolute offset of first free slot in flip hooks
-us_dbuf_flpf	equ	0xFAEF
-; 0xFAEE: Absolute offset of first free slot in frame hooks
-us_dbuf_fraf	equ	0xFAEE
-; 0xFAE0 - 0xFAED: Frame end hooks (functions to call when frame ends)
-us_dbuf_fraa	equ	0xFAE0
-us_dbuf_frae	equ	0xFAEE
-; 0xFADF: Absolute offset of first free slot in flip hooks
-us_dbuf_inif	equ	0xFADF
-; 0xFADE: Flip performed flag (indicates the need to call frame hooks)
-us_dbuf_ff	equ	0xFADE
-; 0xFAD0 - 0xFADD: Page flip hooks (functions to call when flipping pages)
-us_dbuf_inia	equ	0xFAD0
-us_dbuf_inie	equ	0xFADE
+; 0xFDFF: Current display buffer display list offset
+us_dbuf_dl	equ	0xFDFF
+; 0xFDEE: Current work buffer display list offset
+us_dbuf_wl	equ	0xFDFE
+; 0xFDF0 - 0xFDFD: Page flip hooks (functions to call when flipping pages)
+us_dbuf_flpa	equ	0xFDF0
+us_dbuf_flpe	equ	0xFDFE
+; 0xFDEF: Absolute offset of first free slot in flip hooks
+us_dbuf_flpf	equ	0xFDEF
+; 0xFDEE: Absolute offset of first free slot in frame hooks
+us_dbuf_fraf	equ	0xFDEE
+; 0xFDE0 - 0xFDED: Frame end hooks (functions to call when frame ends)
+us_dbuf_fraa	equ	0xFDE0
+us_dbuf_frae	equ	0xFDEE
+; 0xFDDF: Absolute offset of first free slot in flip hooks
+us_dbuf_inif	equ	0xFDDF
+; 0xFDDE: Flip performed flag (indicates the need to call frame hooks)
+us_dbuf_ff	equ	0xFDDE
+; 0xFDD0 - 0xFDDD: Page flip hooks (functions to call when flipping pages)
+us_dbuf_inia	equ	0xFDD0
+us_dbuf_inie	equ	0xFDDE
 
 
 

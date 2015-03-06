@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Display List sprite manager
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -13,11 +13,11 @@
 ; clear the managed columns.
 ;
 ; Uses the following CPU RAM locations:
-; 0xFACC: Bit0: if clear, indicates the occupation data is dirty.
-; 0xFACB: First column to use.
-; 0xFACA: Count of columns to use.
-; 0xFAC9: Current first occupied column on the top.
-; 0xFAC8: Current first non-occupied column on the bottom.
+; 0xFDCC: Bit0: if clear, indicates the occupation data is dirty.
+; 0xFDCB: First column to use.
+; 0xFDCA: Count of columns to use.
+; 0xFDC9: Current first occupied column on the top.
+; 0xFDC8: Current first non-occupied column on the bottom.
 ;
 ; Also adds a Page flip hook (to clear the occupation data).
 ;
@@ -28,16 +28,16 @@ section code
 
 
 
-; 0xFACC: Dirty flag on bit 0: clear if dirty.
-us_sprite_df	equ	0xFACC
-; 0xFACB: Column to start at
-us_sprite_cs	equ	0xFACB
-; 0xFACA: Count of columns
-us_sprite_cc	equ	0xFACA
-; 0xFAC9: Current top column
-us_sprite_pt	equ	0xFAC9
-; 0xFAC8: Current start column
-us_sprite_ps	equ	0xFAC8
+; 0xFDCC: Dirty flag on bit 0: clear if dirty.
+us_sprite_df	equ	0xFDCC
+; 0xFDCB: Column to start at
+us_sprite_cs	equ	0xFDCB
+; 0xFDCA: Count of columns
+us_sprite_cc	equ	0xFDCA
+; 0xFDC9: Current top column
+us_sprite_pt	equ	0xFDC9
+; 0xFDC8: Current start column
+us_sprite_ps	equ	0xFDC8
 
 
 

@@ -12,8 +12,8 @@
 ;
 ; Uses the following CPU RAM locations:
 ;
-; 0xFABF: Double buffering flipflop on bit 0 (0: 'A' is the display surface)
-; 0xFAC0 - 0xFAC7: Default surface definition (just a surface structure)
+; 0xFDBF: Double buffering flipflop on bit 0 (0: 'A' is the display surface)
+; 0xFDC0 - 0xFDC7: Default surface definition (just a surface structure)
 ;
 ; Uses surface structures (objects) of the following layout:
 ;
@@ -33,10 +33,10 @@ section code
 
 
 
-; 0xFABF: Double buffering flipflop (bit 0)
-us_dsurf_ff	equ	0xFABF
-; 0xFAC0: Default surface
-us_dsurf_defs	equ	0xFAC0
+; 0xFDBF: Double buffering flipflop (bit 0)
+us_dsurf_ff	equ	0xFDBF
+; 0xFDC0: Default surface
+us_dsurf_defs	equ	0xFDC0
 
 
 

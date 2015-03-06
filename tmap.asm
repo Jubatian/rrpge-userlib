@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Tile maps
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -13,13 +13,13 @@
 ;
 ; Uses the following CPU RAM locations:
 ;
-; 0xFA95: Destination width (cells)
-; 0xFA96: Destination height
-; 0xFA97: Tile width (cells)
-; 0xFA98: Tile height
-; 0xFA99: X origin fraction
-; 0xFA9A: X origin
-; 0xFA9B: Y origin
+; 0xFD95: Destination width (cells)
+; 0xFD96: Destination height
+; 0xFD97: Tile width (cells)
+; 0xFD98: Tile height
+; 0xFD99: X origin fraction
+; 0xFD9A: X origin
+; 0xFD9B: Y origin
 ;
 ; Uses tile map structures (objects) of the following layout:
 ;
@@ -36,20 +36,20 @@ section code
 
 
 
-; 0xFA95: Destination width (cells)
-us_tmap_dw	equ	0xFA95
-; 0xFA96: Destination height
-us_tmap_dh	equ	0xFA96
-; 0xFA97: Tile width (cells)
-us_tmap_tw	equ	0xFA97
-; 0xFA98: Tile height
-us_tmap_th	equ	0xFA98
-; 0xFA99: X origin fraction
-us_tmap_xf	equ	0xFA99
-; 0xFA9A: X origin
-us_tmap_x	equ	0xFA9A
-; 0xFA9B: Y origin
-us_tmap_y	equ	0xFA9B
+; 0xFD95: Destination width (cells)
+us_tmap_dw	equ	0xFD95
+; 0xFD96: Destination height
+us_tmap_dh	equ	0xFD96
+; 0xFD97: Tile width (cells)
+us_tmap_tw	equ	0xFD97
+; 0xFD98: Tile height
+us_tmap_th	equ	0xFD98
+; 0xFD99: X origin fraction
+us_tmap_xf	equ	0xFD99
+; 0xFD9A: X origin
+us_tmap_x	equ	0xFD9A
+; 0xFD9B: Y origin
+us_tmap_y	equ	0xFD9B
 
 
 

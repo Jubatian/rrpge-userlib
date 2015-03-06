@@ -192,12 +192,12 @@ us_tfreq_i:
 	mov x3,    [$.ton]
 	shr c:x3,  8
 	shl x3,    1		; Make offset (for 2 word records) of x3
-	or  x3,    0xFC00
+	or  x3,    0xF800
 	xne c,     0
 	jms .fast		; "Whole" semitones from the table
 
 	; Note: For freq > 0xFF00 the result will be bogus as the high end is
-	; fetched from the sine table. Don't care.
+	; fetched from the color table. Don't care.
 
 	; Save registers
 

@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Font tileset
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -12,9 +12,9 @@
 ;
 ; Uses the following CPU RAM locations:
 ;
-; 0xFA92: Tile index multiplier
-; 0xFA93: Memorized blit configuration (by us_tile_getacc)
-; 0xFA94: Memorized tile start offset (by us_tile_getacc)
+; 0xFD92: Tile index multiplier
+; 0xFD93: Memorized blit configuration (by us_tile_getacc)
+; 0xFD94: Memorized tile start offset (by us_tile_getacc)
 ;
 ; Uses tileset structures (objects) of the following layout:
 ;
@@ -47,12 +47,12 @@ section code
 
 
 
-; 0xFA92: Tile index multiplier
-us_ftile_imul	equ	0xFA92
-; 0xFA93: Memorized blit configuration
-us_ftile_mcfg	equ	0xFA93
-; 0xFA94: Memorized tile start offset
-us_ftile_moff	equ	0xFA94
+; 0xFD92: Tile index multiplier
+us_ftile_imul	equ	0xFD92
+; 0xFD93: Memorized blit configuration
+us_ftile_mcfg	equ	0xFD93
+; 0xFD94: Memorized tile start offset
+us_ftile_moff	equ	0xFD94
 
 
 
@@ -220,3 +220,22 @@ us_ftile_gethw_i:
 	mov x3,    [x3]		; Height
 	xch x3,    c
 	rfn
+
+
+
+;
+; Implementation of us_ftile_setch
+;
+us_ftile_setch_i:
+.srp	equ	0		; Source pointer
+.col	equ	1		; New color high bits to set
+
+	mov x3,    [$.srp]
+	add x3,    7
+	mov c,     0x0FFF
+	and [x3],  c
+	sub x3,    1
+	mov c,     [$.col]
+	shl c,     12
+	or  [x3],  c
+	rfn c:x3,  0
