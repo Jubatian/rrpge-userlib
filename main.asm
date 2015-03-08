@@ -178,7 +178,10 @@ org 0xE000				; Bottom of entry table
 	jma us_ftile_blit_i		; 0xE13A ftile.asm
 	jma us_ftile_gethw_i		; 0xE13C ftile.asm
 	jma us_ftile_setch		; 0xE13E ftile.asm
-
+	jma us_strcpynz_i		; 0xE140 printf.asm
+	jma us_strcpy_i			; 0xE142 printf.asm
+	jma us_printfnz_i		; 0xE144 printf.asm
+	jma us_printf_i			; 0xE146 printf.asm
 
 
 	; User Library code starts after the table
@@ -207,3 +210,4 @@ include "charw.asm"
 include "charwt.asm"
 include "utf.asm"
 include "ftile.asm"
+include "printf.asm"

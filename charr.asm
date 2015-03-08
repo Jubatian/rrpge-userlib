@@ -114,11 +114,24 @@ us_cr_cbyte_new_i:
 
 	jfa us_cr_new_i {[$.opt], us_cr_cbyte_setsi, us_cr_cbyte_getnc}
 	add x3,    2
+	xug sp,    3		; If at least 4 parameters are provided, it has table
+	jms .tfd
 	mov c,     [$.tbh]
 	mov [x3],  c
 	mov c,     [$.tbl]
 	mov [x3],  c
+	jms us_cr_cbyte_setsi_i	; Tail transfer to set index (which is provided)
+.tfd:	mov c,     up_uf437_h
+	mov [x3],  c
+	mov c,     up_uf437_l
+	mov [x3],  c
+	xul sp,    2
 	jms us_cr_cbyte_setsi_i	; Tail transfer to set index
+	sub x3,    4		; 1 parameter: no index
+.clre:	mov c,     0		; Entry point for clearing exit
+	mov [x3],  c
+	mov [x3],  c
+	rfn c:x3,  0
 
 
 
@@ -208,11 +221,24 @@ us_cr_pbyte_new_i:
 
 	jfa us_cr_new_i {[$.opt], us_cr_pbyte_setsi, us_cr_pbyte_getnc}
 	add x3,    2
+	xug sp,    4		; If at least 5 parameters are provided, it has table
+	jms .tfd
 	mov c,     [$.tbh]
 	mov [x3],  c
 	mov c,     [$.tbl]
 	mov [x3],  c
-	jfa us_cr_pbyte_setsi_i {[$.opt], [$.idx]}
+.tsi:	jfa us_cr_pbyte_setsi_i {[$.opt], [$.idx]}
+	jms us_cr_pbyte_setsb_i	; Tail transfer to set bank
+.tfd:	mov c,     up_uf437_h
+	mov [x3],  c
+	mov c,     up_uf437_l
+	mov [x3],  c
+	xul sp,    3
+	jms .tsi		; At least 3 parameters: it has index
+	sub x3,    4		; Clear index, then tail-transfer to bank set
+.clre:	mov c,     0
+	mov [x3],  c
+	mov [x3],  c
 	jms us_cr_pbyte_setsb_i	; Tail transfer to set bank
 
 
@@ -292,6 +318,8 @@ us_cr_cutf8_new_i:
 .idx	equ	1		; Index
 
 	jfa us_cr_new_i {[$.opt], us_cr_cutf8_setsi, us_cr_cutf8_getnc}
+	xug sp,    1
+	jms us_cr_cbyte_new_i.clre
 	jms us_cr_cutf8_setsi_i	; Tail transfer to set index
 
 
@@ -388,6 +416,8 @@ us_cr_putf8_new_i:
 .idx	equ	2		; Index
 
 	jfa us_cr_new_i {[$.opt], us_cr_putf8_setsi, us_cr_putf8_getnc}
+	xug sp,    2		; Note: common handling with byte reader (us_cr_pbyte_setsb_i common)
+	jms us_cr_pbyte_new_i.clre
 	jfa us_cr_putf8_setsi_i {[$.opt], [$.idx]}
 	jms us_cr_putf8_setsb_i	; Tail transfer to set bank
 

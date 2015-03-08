@@ -63,33 +63,84 @@ section code
 ;
 us_cw_tile_new_i:
 .opt	equ	0		; Object pointer
-.col	equ	1		; Initial color (appropriate low bits used)
-.csh	equ	2		; Color shift (low 4 bits used)
-.tpt	equ	3		; Used tileset object's pointer
-.spt	equ	4		; Used destination surface object's pointer
+.tpt	equ	1		; Used tileset object's pointer
+.spt	equ	2		; Used destination surface object's pointer
+.col	equ	3		; Initial color (appropriate low bits used)
+.csh	equ	4		; Color shift (low 4 bits used)
 .tbh	equ	5		; Conversion table PRAM word pointer, high
 .tbl	equ	6		; Conversion table PRAM word pointer, low
 
+.tlw	equ	1		; Tile width
+.tlh	equ	2		; Tile height
+.dsw	equ	3		; Destination width
+
 	jfa us_cw_new_i {[$.opt], us_cw_tile_setnc, us_cw_tile_init, us_cw_tile_setst}
+
+	xug sp,    1
+	jms .rei		; 1 parameter: re-initialize
 
 	mov c,     0
 	mov [x3],  c		; Initial X
 	mov [x3],  c		; Initial Y
 	add x3,    3
+	mov c,     up_ffutf_h	; Default value if <=5 parameters
+	xul sp,    6
 	mov c,     [$.tbh]
 	mov [x3],  c
+	mov c,     up_ffutf_l	; Default value if <=5 parameters
+	xul sp,    6
 	mov c,     [$.tbl]
 	mov [x3],  c
+	mov c,     12		; Default value if <=4 parameters
+	xul sp,    5
 	mov c,     [$.csh]
 	mov [x3],  c		; Color shift (shifts only take low 4 bits, don't care)
-	shl [$.col], c
+	mov c,     1		; Default value if <=3 parameters
+	xul sp,    4
 	mov c,     [$.col]
+	sub x3,    1
+	shl c,     [x3]
 	mov [x3],  c		; Color (default)
 	mov [x3],  c		; Color (current)
 	mov c,     [$.tpt]
 	mov [x3],  c
+	mov c,     up_dsurf	; Default value if <=2 parameters
+	xul sp,    3
 	mov c,     [$.spt]
 	mov [x3],  c
+
+.rei:	; Prepare calculated values
+
+	mov sp,    4
+
+	; Get tileset dimensions
+
+	mov x3,    [$.opt]
+	add x3,    13
+	jfa us_tile_gethw_i {[x3]}
+	mov [$.tlh], c
+	mov [$.tlw], x3
+
+	; Get surface width
+
+	mov x3,    [$.opt]
+	add x3,    14
+	jfa us_dsurf_getpw_i {[x3]}
+	mov [$.dsw], x3
+
+	; Set up calculated structure elements
+
+	mov x3,    [$.opt]
+	add x3,    5
+	mov c,     [$.tlw]
+	mov [x3],  c		; Width of tileset
+	mov c,     [$.tlh]
+	mul c,     [$.dsw]
+	mov [x3],  c		; Height of tileset * surface_width
+	mov c,     [$.dsw]
+	div c,     [$.tlw]
+	mul c,     [$.tlw]	; Trim to smaller tile boundary
+	mov [x3],  c		; Effective width of surface
 
 	rfn c:x3,  0
 
@@ -105,7 +156,7 @@ us_cw_tile_setnc_i:
 
 	mov sp,    5
 
-	; Save CPU registers & provide entry point
+	; Save CPU registers
 
 	mov [$3],  a
 	mov [$4],  b
@@ -117,24 +168,14 @@ us_cw_tile_setnc_i:
 	jfa us_idfutf32_i {[x3], [x3], [$.u4h], [$.u4l]}
 	mov a,     x3
 
-	; Process special characters
+	; Prepare commons for blit & check for special characters
 
-	mov xm3,   PTR16	; It is simpler to do the specials this way
 	mov x3,    [$.opt]
 	add x3,    5
 	mov b,     [x3]		; Prepare tile width in 'b'
-	sub x3,    2		; Prepare object pointer in 'x3' (points to X)
-	xne a,     '\n'
-	jms .nln		; New line (next line by tile height + cret)
-	xne a,     '\r'
-	jms .crt		; Carriage return
-	xne a,     '\t'
-	jms .tab		; Tab (jump to next multiple of t.w * 8 on X)
-	xne a,     0x08
-	jms .bks		; Backspace (one char. back until begin)
-	xug a,     0x1F
-	jms .exit		; Any other control char.: Do nothing
-	mov xm3,   PTR16I	; Restore, function call will need it
+	sub x3,    3		; Prepare object pointer in 'x3' (points to X)
+	xug a,     0x1F		; Control characters?
+	jms .cchr		; Yes, so check and branch out
 
 	; Prepare for blitting character, and blit it
 
@@ -144,7 +185,7 @@ us_cw_tile_setnc_i:
 	btc a,     15		; Mask out highest bit
 	or  a,     [x3]		; Add color (with OR)
 	jfa us_tile_blit_i {[x3], a, c}
-	mov xm3,   PTR16
+	mov xm3,   PTR16	; From here it is simpler if it doesn't increment
 
 	; Add one tile to X location
 
@@ -155,8 +196,17 @@ us_cw_tile_setnc_i:
 	add x3,    4
 	xug [x3],  b
 	jms .nlp		; X location got equal or larger than width
-	jms .exit
-.nlp:	sub x3,    4		; Prepare for new line
+
+.exit:	; Restore CPU regs & return
+
+	mov xm3,   PTR16I
+	mov a,     [$3]
+	mov b,     [$4]
+	rfn c:x3,  0
+
+.nlp:	; New line (from common end check)
+
+	sub x3,    4
 
 .nln:	; New line. Increment Y accordingly, then fall through to carriage
 	; return.
@@ -173,6 +223,19 @@ us_cw_tile_setnc_i:
 	mov [x3],  c
 	jms .exit
 
+.cchr:	; Control character check and branch out
+
+	mov xm3,   PTR16	; It is simpler to do the specials this way
+	xne a,     '\n'
+	jms .nln		; New line (next line by tile height + cret)
+	xne a,     '\r'
+	jms .crt		; Carriage return
+	xne a,     '\t'
+	jms .tab		; Tab (jump to next multiple of t.w * 8 on X)
+	xne a,     0x08
+	jms .bks		; Backspace (one char. back until begin)
+	jms .exit		; Any other control char.: Do nothing
+
 .tab:	; Tab, jumps to next multiple of tilewidth * 8
 
 	shl b,     3		; Tile width * 8
@@ -186,13 +249,8 @@ us_cw_tile_setnc_i:
 
 	xug b,     [x3]
 	sub [x3],  b
+	jms .exit
 
-.exit:	; Restore CPU regs & return
-
-	mov xm3,   PTR16I
-	mov a,     [$3]
-	mov b,     [$4]
-	rfn c:x3,  0
 
 
 
@@ -229,43 +287,6 @@ us_cw_tile_setst_i:
 ;
 us_cw_tile_init_i:
 .opt	equ	0		; Object pointer
-
-.tlw	equ	1		; Tile width
-.tlh	equ	2		; Tile height
-.dsw	equ	3		; Destination width
-
-	mov sp,    4
-
-	; Prepare calculated values
-
-	; Get tileset dimensions
-
-	mov x3,    [$.opt]
-	add x3,    13
-	jfa us_tile_gethw_i {[x3]}
-	mov [$.tlh], c
-	mov [$.tlw], x3
-
-	; Get surface width
-
-	mov x3,    [$.opt]
-	add x3,    14
-	jfa us_dsurf_getpw_i {[x3]}
-	mov [$.dsw], x3
-
-	; Set up calculated structure elements
-
-	mov x3,    [$.opt]
-	add x3,    5
-	mov c,     [$.tlw]
-	mov [x3],  c		; Width of tileset
-	mov c,     [$.tlh]
-	mul c,     [$.dsw]
-	mov [x3],  c		; Height of tileset * surface_width
-	mov c,     [$.dsw]
-	div c,     [$.tlw]
-	mul c,     [$.tlw]	; Trim to smaller tile boundary
-	mov [x3],  c		; Effective width of surface
 
 	; Set up accelerator for blitting
 

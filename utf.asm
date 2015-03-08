@@ -226,9 +226,8 @@ us_idfutf32_i:
 
 	mov c,     [$.u4h]
 	mov x3,    [$.u4l]
-	xne c,     0
-	xug 128,   x3
-	jms .main
+	jnz c,     .main
+	xug x3,    127
 	rfn			; Less than 128, straight return (in X3)
 
 .main:	mov sp,    9
