@@ -8,6 +8,10 @@
 ;           root.
 ;
 ;
+; This should be placed near utf.asm so the short jumps to the tail-called
+; functions stay in range.
+;
+;
 ; Character readers implemented:
 ;
 ;
@@ -160,6 +164,17 @@ us_cr_cutf8_setsi_i:
 us_cr_cbyte_getnc_i:
 .opt	equ	0		; Object pointer
 
+	; Load character
+
+	jfa us_cr_cchar_f {[$.opt]}
+
+	; If less than 128, then simply return it
+
+	xug x3,    127
+	rfn			; <128, ASCII-7 return
+
+.entr:	; Common handler with PRAM loader
+
 	mov sp,    3
 
 	; Save CPU registers
@@ -167,21 +182,12 @@ us_cr_cbyte_getnc_i:
 	mov [$1],  a
 	mov [$2],  d
 
-	; Load character ('x3' will point at table pointer high)
+	; Decode by table
 
-	jma d,     us_cr_cchar
-
-	; If less than 128, then simply return it
-
-.entr:	xug 128,   a
-	jms .tbl		; >= 128, so use the table
-	mov x3,    a
-	mov c,     0
-	jms .exit
-
-	; Larger than 127, need to use table to get UTF-32
-
-.tbl:	btc a,     7		; Mask for 0 - 127 range
+	mov a,     x3
+	mov x3,    [$.opt]
+	add x3,    4
+	btc a,     7		; Mask for 0 - 127 range
 	shl a,     1		; Table word pointer
 	mov d,     [x3]		; Table pointer, high
 	mov c,     [x3]		; Table pointer, low
@@ -199,13 +205,12 @@ us_cr_cbyte_getnc_i:
 	mov c,     4
 	mov [x3],  c		; P3_DS
 	mov c,     [P3_RW]	; UTF-32, high
-	mov x3,    [P3_RW]	; UTF-32, low
 
 	; Restore CPU registers & exit
 
-.exit:	mov a,     [$1]
+	mov a,     [$1]
 	mov d,     [$2]
-	rfn
+	rfn x3,    [P3_RW]	; UTF-32, low
 
 
 
@@ -293,18 +298,16 @@ us_cr_putf8_setsi_i:
 us_cr_pbyte_getnc_i:
 .opt	equ	0		; Object pointer
 
-	mov sp,    3
-
-	; Save CPU registers
-
-	mov [$1],  a
-	mov [$2],  d
-
 	; Load character
 
-	jma d,     us_cr_pchar
+	jfa us_cr_pchar_f {[$.opt]}
 
-	; Tail transfer
+	; If less than 128, then simply return it
+
+	xug x3,    127
+	rfn			; <128, ASCII-7 return
+
+	; Tail transfer to table load
 
 	jms us_cr_cbyte_getnc_i.entr
 
@@ -330,80 +333,11 @@ us_cr_cutf8_new_i:
 us_cr_cutf8_getnc_i:
 .opt	equ	0		; Object pointer
 
-.ub0	equ	1		; UTF-8 sequence, char 0
-.ub1	equ	2		; UTF-8 sequence, char 1
-.ub2	equ	3		; UTF-8 sequence, char 2
-
-	mov sp,    7
-
-	; Prepare for CPU RAM loading
-
-	mov [$5],  b
-	mov b,     us_cr_cchar	; Char. loader: CPU RAM
-
-	; Fast ASCII-7 test: if first char is <128, then plain ASCII-7
-
-.entr:	mov [$4],  a		; Save CPU register A
-	mov [$6],  d
-	jma d,     b		; Load first character
-	xbs a,     7
-	jms .exia		; <128, so ASCII-7
-
-	; UTF-8 character sequence. Do a partial decode, just guessing the
-	; size, and loading the necessary subsequent chars.
-
-	; Check for invalid continuing byte
-
-	xbs a,     6
-	jms .inv		; C:X3 zero, return because this is invalid
-
-	; Check for 2 byte sequence
-
-	mov [$.ub0], a
-	jma d,     b
-	xbc [$.ub0], 5
-	jms .nb2
-	jfa us_utf32f8_i {[$.ub0], a}
-	jms .exit
-
-.nb2:	; Check for 3 byte sequence
-
-	xne a,     0
-	jms .inv		; String end before end of UTF-8 char, invalid
-	mov [$.ub1], a
-	jma d,     b
-	xbc [$.ub0], 4
-	jms .nb3
-	jfa us_utf32f8_i {[$.ub0], [$.ub1], a}
-	jms .exit
-
-.nb3:	; Check for 4 byte sequence
-
-	xne a,     0
-	jms .inv		; String end before end of UTF-8 char, invalid
-	mov [$.ub2], a
-	jma d,     b
-	xbc [$.ub0], 3
-	jms .inv		; No longer sequence support, so invalid
-	jfa us_utf32f8_i {[$.ub0], [$.ub1], [$.ub2], a}
-	jms .exit
-
-	; Invalid UTF-8
-
-.inv:	mov x3,    0
-	jms .exii
-
-	; ASCII-7 exit
-
-.exia:	mov x3,    a		; Return low
-.exii:	mov c,     0		; Return high
-
-	; Restore CPU regs & exit
-
-.exit:	mov b,     [$5]
-	mov a,     [$4]
-	mov d,     [$6]
-	rfn
+	mov sp,    2
+	mov c,     us_cr_cchar_f
+	xch [$0],  c		; Just prepare stack for us_utf32f8 ...
+	mov [$1],  c		; ... and transfer
+	jms us_utf32f8_i
 
 
 
@@ -429,67 +363,62 @@ us_cr_putf8_new_i:
 us_cr_putf8_getnc_i:
 .opt	equ	0		; Object pointer
 
-.ub0	equ	1		; UTF-8 sequence, char 0
-.ub1	equ	2		; UTF-8 sequence, char 1
-.ub2	equ	3		; UTF-8 sequence, char 2
-
-	mov sp,    7
-
-	; Prepare for PRAM loading & transfer
-
-	mov [$5],  b
-	mov b,     us_cr_pchar	; Char. loader: PRAM
-	jms us_cr_cutf8_getnc_i.entr
+	mov sp,    2
+	mov c,     us_cr_pchar_f
+	xch [$0],  c		; Just prepare stack for us_utf32f8 ...
+	mov [$1],  c		; ... and transfer
+	jms us_utf32f8_i
 
 
 
 ;
 ; Internal load character function for CPU RAM, with pointer write-back,
-; returning to 'd'. Assumes the object pointer to be at [$0]. Returns the
-; character in 'a', 'x3' set past the current offset in the object structure.
-; Register 'c' is destroyed in the process.
+; returning proper to 'x3'.
 ;
-us_cr_cchar:
+us_cr_cchar_f:
 .opt	equ	0		; Object pointer
 
-	; Load character pointer
-
-	mov x3,    [$.opt]
-	add x3,    2
-	mov c,     [x3]		; Pointer high (will be x3)
-	mov xb3,   [x3]		; Pointer low
-	xch x3,    c
+	mov sp,    3
+	mov [$1],  x2
+	mov [$2],  xm
 
 	; Load character
 
-	mov xm3,   PTR8I
-	mov a,     [x3]
-	mov xm3,   PTR16I
-	xch c,     x3
-	sub x3,    2		; Write back new char pointer
-	mov [x3],  c
-	mov [x3],  xb3
+	mov xm,    0x8666	; x3: PTR8; x2: PTR16I
+	mov x2,    [$.opt]
+	add x2,    2
+	mov x3,    [x2]		; Pointer high (will be x3)
+	mov xb3,   [x2]		; Pointer low
+	mov c,     [x3]
+	sub x2,    2		; Write back new char pointer
+	mov [x2],  x3
+	mov [x2],  xb3
 
-	jma d			; Character returns in 'a'
+	; Restore CPU regs & return
+
+	mov xm,    [$2]
+	mov x2,    [$1]
+	rfn c:x3,  c
 
 
 
 ;
 ; Internal load character function for PRAM, with pointer write-back,
-; returning to 'd'. Assumes the object pointer to be at [$0]. Returns the
-; character in 'a', 'x3' set past the current offset in the object structure.
-; Register 'c', and PRAM pointer 3 are destroyed in the process.
+; returning proper to 'x3'.
 ;
-us_cr_pchar:
+us_cr_pchar_f:
 .opt	equ	0		; Object pointer
+
+	mov sp,    2
+	mov [$1],  a
 
 	; Load character
 
 	mov x3,    [$.opt]
 	add x3,    2
 	mov c,     [x3]
-	mov [P3_AH], c
 	mov a,     [x3]		; Load in 'a' to remember it for adding
+	mov [P3_AH], c
 	mov [P3_AL], a
 	mov c,     3
 	mov [P3_DS], c		; 8 bit data size
@@ -497,6 +426,8 @@ us_cr_pchar:
 	sub x3,    2
 	add [x3],  c		; High of new PRAM bit pointer
 	mov [x3],  a		; Low of new PRAM bit pointer
-	mov a,     [P3_RW_NI]
 
-	jma d			; Character returns in 'a'
+	; Restore CPU regs & return
+
+	mov a,     [$1]
+	rfn c:x3,  [P3_RW_NI]

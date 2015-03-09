@@ -123,25 +123,37 @@ us_printf_core_i:
 
 	; If it is some non-ASCII-7 character, just output it
 
-	jnz c,     .cou0	; C nonzero: Definitely not ASCII-7
+	jnz c,     .cout	; C nonzero: Definitely not ASCII-7
 
 	; End of string?
 
 	xne x3,    0
 	jms .exit
 
+	; Branch out to specials
+
+	xne x3,    '%'
+	jms .chfr
+	xne x3,    '$'
+	jms .chat
+	xne x3,    '\\'
+	jms .chsp
+
+	; Output normal character (in C:X3)
+
+.cout:	jfa us_cw_setnc_i {[$.twr], c, x3}
+	jms .l0
+
 
 	; If it is a '\', then read in special character to process. The '\'
 	; is never displayed, neither any character escaped with it except if
 	; it is a valid control code.
 
-	xeq x3,    '\\'
-	jms .nsc		; Not a special character
-	jfa us_cr_getnc_i {[$.srd]}
+.chsp:	jfa us_cr_getnc_i {[$.srd]}
 	jnz c,     .cds2	; Not a valid escape, discard
 	xeq x3,    '"'		; Double quote, can go on to char. output
 	xne x3,    '\\'
-.cou0:	jms .cout		; Backslash, can go on to char. output
+	jms .cout		; Backslash, can go on to char. output
 	xne x3,    'n'
 	jms .enl		; Newline
 	xne x3,    'r'
@@ -162,11 +174,9 @@ us_printf_core_i:
 	jms .cout
 
 
-.nsc:	; If it is a '%', then some format string, also taking a parameter.
+.chfr:	; If it is a '%', then some format string, also taking a parameter.
 	; Parameters come from [$x2].
 
-	xeq x3,    '%'
-	jms .atr		; Not a format specifier
 	jfa us_cr_getnc_i {[$.srd]}
 	jnz c,     .cds2	; Not a valid format specifier, discard
 	xne x3,    '%'
@@ -476,11 +486,9 @@ us_printf_core_i:
 	jms .l0
 
 
-.atr:	; If it is a '$', then an attribute. Otherwise nothing else, just
+.chat:	; If it is a '$', then an attribute. Otherwise nothing else, just
 	; output it.
 
-	xeq x3,    '$'
-	jms .cout		; Not an attribute, nothing else, output char
 	jfa us_cr_getnc_i {[$.srd]}
 	jnz c,     .cds0	; Not a valid attribute specifier, discard
 	xne x3,    '$'
@@ -567,19 +575,13 @@ us_printf_core_i:
 .adf:	; Restore default was asked for attribute 'a', do it
 
 	jfa us_cw_setst_i{[$.twr], a}
-	jms .l0
+.l00:	jms .l0
 
 
 .cds:	; Discard character (invalid escape, format or attribute string)
 
-	jnz c,     .l00
+	jnz c,     .l00		; If end of string, then fall through and exit
 	jnz x3,    .l00
-	jms .exit		; End of input string (may happen)
-
-.cout:	; OK, in C:X3, a valid character is listed. Output it.
-
-	jfa us_cw_setnc_i {[$.twr], c, x3}
-.l00:	jms .l0
 
 .exit:	; Restore CPU regs & return
 

@@ -29,99 +29,74 @@ section code
 ; Implementation of us_utf32f8
 ;
 us_utf32f8_i:
-.ub0	equ	0		; First UTF-8 byte
-.ub1	equ	1		; Second UTF-8 byte
-.ub2	equ	2		; Third UTF-8 byte
-.ub3	equ	3		; Fourth UTF-8 byte
+.brf	equ	0		; Byte reader function
+.brp	equ	1		; Parameter to pass to the byte reader
+
+	; Read first byte
+
+	jfa [$.brf] {[$.brp]}
 
 	; Check for 7 bit ASCII
 
-	mov c,     0		; Set return high zero for now
-	xbc [$.ub0], 7
-	jms .var		; Not 7 bit ASCII
-	mov x3,    0xFF
-	and x3,    [$.ub0]
-	rfn			; C was zero, return OK
-
-	; Supports variable number of arguments (up to 4), work around
-	; that with adding zero padding.
-
-.var:	mov x3,    sp
-	mov sp,    4
-	xug 5,     x3
-.inv:	rfn c:x3,  0		; Too many parameters, fail (C:X3 zero)
-	jmr x3			; SP = 0 would cause infinite loop here. Invalid, don't care.
-	mov [$x3], c		; Load a zero for the omitted parameters
-	mov [$x3], c
-	mov [$x3], c
+	and x3,    0xFF
+	xbs x3,    7		; 7 bit ASCII?
+	rfn c:x3,  x3		; Yes, so return
 
 	; Check for invalid continuing byte as first UTF-8 byte
 
-	xbs [$.ub0], 6
-	jms .inv		; Return because this is invalid
+	xbs x3,    6
+	rfn c:x3,  0		; Invalid return (0b10xxxxxx: continuation byte)
 
-	; Set up for continuation byte masking, so all decoders get only the
-	; value part (do this with mask to clean up high bits of the word
-	; inputs, a bit clear would be sufficient otherwise).
+	; At least 2 UTF-8 bytes. Prepare for reading next
 
-	mov x3,    0x3F		; To mask out the used part of the bytes
+	mov sp,    3
+	mov [$2],  a		; Save CPU register
+	mov a,     0x3F
+	and a,     x3		; First byte, prepares for output
 
-	; Go on decoding multi-byte UTF-8
+	; Read second byte & check for 2 byte sequence
 
-	xbs [$.ub1], 6		; Check continuation byte 1
-	xbs [$.ub1], 7
-	jms .inv		; Invalid if not 0b10xxxxxx
-	and [$.ub1], x3
+	jfa [$.brf] {[$.brp]}
+	xbs x3,    6
+	xbs x3,    7
+	jms .inv		; Invalid (not 0b10xxxxxx format)
+	and x3,    0x3F
+	shl a,     6
+	or  x3,    a
+	mov a,     [$2]		; Restore CPU reg. for clean return
+	xbs x3,    11		; First byte bit 5 was set?
+	rfn c:x3,  x3		; If not, 2 byte sequence (11 bits)
+	btc x3,    11
+	mov a,     x3
 
-	; Check for 2 byte sequence
+	; Read third byte & check for 3 byte sequence
 
-	xbc [$.ub0], 5
-	jms .nb2
-	mov x3,    0x1F
-	and x3,    [$.ub0]
-	shl x3,    6
-	or  x3,    [$.ub1]
-	rfn			; C:X3 proper return for 2 byte source
+	jfa [$.brf] {[$.brp]}
+	xbs x3,    6
+	xbs x3,    7
+	jms .inv		; Invalid (not 0b10xxxxxx format)
+	and x3,    0x3F
+	shl c:a,   6
+	or  x3,    a
+	mov a,     [$2]		; Restore CPU reg. for clean return
+	xbs c,     0		; First byte bit 4 was set?
+	rfn c:x3,  x3		; If not, 3 byte sequence (16 bits)
+	mov a,     x3
 
-.nb2:	xbs [$.ub2], 6		; Check continuation byte 2
-	xbs [$.ub2], 7
-	jms .inv		; Invalid if not 0b10xxxxxx
-	and [$.ub2], x3
+	; Read fourth byte & check for 4 byte sequence
 
-	; Check for 3 byte sequence
-
-	xbc [$.ub0], 4
-	jms .nb3
-	mov x3,    6
-	shl [$.ub1], x3
-	mov x3,    0x0F
-	and x3,    [$.ub0]
-	shl x3,    12
-	or  x3,    [$.ub1]
-	or  x3,    [$.ub2]
-	rfn			; C:X3 proper return for 3 byte source
-
-.nb3:	xbs [$.ub3], 6		; Check continuation byte 3
-	xbs [$.ub3], 7
-	jms .inv		; Invalid if not 0b10xxxxxx
-	and [$.ub3], x3
-
-	; Check for 4 byte sequence
-
-	xbc [$.ub0], 3
-	jms .inv		; Invalid (no longer sequence support)
-	mov x3,    6
-	shl [$.ub2], x3
-	mov x3,    12
-	shl c:[$.ub1], x3
-	mov x3,    0x07
-	and x3,    [$.ub0]
-	shl x3,    2
-	or  c,     x3		; C: high 5 bits complete
-	mov x3,    [$.ub1]
-	or  x3,    [$.ub2]
-	or  x3,    [$.ub3]
-	rfn			; C:X3 proper return for 4 byte source
+	jfa [$.brf] {[$.brp]}
+	xbs x3,    6
+	xbs x3,    7
+	jms .inv		; Invalid (not 0b10xxxxxx format)
+	and x3,    0x3F
+	shl c:a,   6
+	or  x3,    a
+	mov a,     [$2]		; Restore CPU reg. for clean return
+	xbs c,     5		; First byte bit 3 was set?
+	rfn x3,    x3		; If not, 4 byte sequence (21 bits)
+.inv:	mov a,     [$2]		; Invalid sequences (no support for >4 byte)
+	rfn c:x3,  0
 
 
 
