@@ -20,7 +20,7 @@
 ; The range of dividers to test should be set up by properly in "a:b", and the
 ; loop termination condition. About 256K divisions can be shown on one screen.
 ; With the current implementation interesting ranges are around:
-; 0x00000002 - 0x00080000
+; 0x00000002 - 0x00100000
 ; 0x10000000 - 0x10040000
 ; 0x11110000 - 0x11150000
 ;

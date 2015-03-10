@@ -69,35 +69,122 @@ us_div32_i:
 	;
 	; c:x3 = us_rec32 {[$.o2h], [$.o2l]}
 	; c:x3 = (c:x3 * [$.o1h]:[$.o1l]) >> 32
+	; if ([$.o1h]:[$.o1l] >= ((c:x3 + 1) * [$.o2h]:[$.o2l]))
+	;   c:x3 ++
 	;
-	; In the latter, all 4 components of the multiply has to be performed
-	; (it is not possible to omit [$.o1l] * x3), since even the lowest
-	; member will contribute to carry.
+	; The correction step (if):
+	; This is necessary since the reciprocal is not accurate (it is
+	; smaller than the real reciprocal since being truncated to 0.32 fixed
+	; point).
 
 	mov c,     [$.o2h]
 	jnz c,     .l0
 	mov c,     [$.o2l]
 	xne c,     1
 	jms .l1			; For a divisor of 1, special return
+	xne c,     0
+	rfn x3,    0		; For a divisor of 0, return zero
 
-.l0:	jfa us_rec32 {[$.o2h], [$.o2l]}
-	mov [$3],  x3
-	mov [$2],  c
+.l0:	mov sp,    6
+
+	; c:x3 = us_rec32 {[$.o2h], [$.o2l]}
+
+	jfa us_rec32_i {[$.o2h], [$.o2l]}
+
+	; c:x3 = (c:x3 * [$.o1h]:[$.o1l]) >> 32
+
+	mov [$5],  x3
+	mov [$4],  c
 	mul c:x3,  [$.o1l]	; x3 (lowest 16 bit of result) is discardable
-	mov x3,    [$2]
+	mov x3,    [$4]
 	mac c:x3,  [$.o1l]	; c:x3 *= [$.o1l], bits 16 - 47 of result
 	xch c,     x3		; c: bits 16 - 31; x3: bits 32 - 47
-	xch x3,    [$3]
+	xch x3,    [$5]
 	mac c:x3,  [$.o1h]	; c:x3: bits 16 - 47 of result, x3 discardable
-	mov x3,    [$2]
+	mov x3,    [$4]
 	mac c:x3,  [$.o1h]	; c:x3: bits 32 - 63 of result
-	mov [$2],  c
-	adc x3,    [$3]		; Add the "* [$.o1l]" part's bit 32 - 47
-	add c,     [$2]
+	mov [$4],  c
+	add c:x3,  [$5]		; Add the "* [$.o1l]" part's bit 32 - 47
+	add c,     [$4]
+
+	; if ([$.o1h]:[$.o1l] >= ((c:x3 + 1) * [$.o2h]:[$.o2l]))
+	;   c:x3 ++
+	;
+	; Here either c:x3 or [$.o2h]:[$.o2l] must be less than 0x10000, so
+	; only occupying 16 bits. This can be exploited to simplify the
+	; multiplication.
+
+	jnz c,     .l2
+
+	; Try to go for:
+	; if ([$.o1h]:[$.o1l] >= ((x3 + 1) * [$.o2h]:[$.o2l]))
+	;   x3 ++
+
+	add x3,    1
+	jnz x3,    .l3
+
+	; Special: x3 was 0xFFFF. This case [$.o2h]:[$.o2l] is also <= 0xFFFF
+	; since the number to be divided was less than 0x100000000.
+
+	sub x3,    1
+
+.l2:	; if ([$.o1h]:[$.o1l] >= ((c:x3 + 1) * [$.o2l]))
+	;   c:x3 ++
+	; This is transformed in order to reduce comparisons (the subtraction
+	; result obviously needing check for > 16 bits):
+	; if ([$.o1h]:[$.o1l] - (c:x3 * [$.o2l]) >= [$.o2l])
+	;   c:x3 ++
+
+	mov [$5],  x3
+	mov [$4],  c
+	mov [$.o2h],  c
+	mul c:x3,  [$.o2l]
+	xch x3,    [$.o2h]
+	mac x3,    [$.o2l]	; x3:[$.o2h]: c:x3 * [$.o2l]
+	xch x3,    [$.o2h]
+	sub c:[$.o1l], x3
+	mov x3,    [$.o1h]
+	sbc x3,    [$.o2h]	; x3:[$.o1l]: [$.o1h]:[$.o1l] - (c:x3 * [$.o2l])
+	jnz x3,    .l2a
+	mov x3,    [$.o1l]
+	xul x3,    [$.o2l]
+	jms .l2a		; [$.o1l] >= [$.o2l]: Add 1
+	mov c,     [$4]
+	rfn x3,    [$5]
+.l2a:	mov x3,    [$5]
+	add c:x3,  1
+	add c,     [$4]
 	rfn
 
-.l1:	mov c,     [$.o1h]
-	rfn x3,    [$.o1l]	; Special return for a divisor of 1
+.l3:	; if ([$.o1h]:[$.o1l] >= ((x3 + 1) * [$.o2h]:[$.o2l]))
+	;   x3 ++
+	; Register x3 is already incremented, so multiply and compare only.
+
+	mov [$5],  x3
+	mov x3,    [$.o2l]
+	mul c:x3,  [$5]
+	mov [$4],  x3
+	mov x3,    [$.o2h]
+	mac c:x3,  [$5]		; x3:[$4]: (x3 + 1) * [$.o2h]:[$.o2l]
+	jnz c,     .l3o		; Multiplication overflow?
+	mov c,     [$5]		; Check [$.o1h]:[$.o1l] >= x3:[$4]
+	xne x3,    [$.o1h]
+	jms .l3e
+	xul x3,    [$.o1h]
+	sub c,     1		; x3 >  [$.o1h]: Remove the +1
+	rfn c:x3,  c		; x3 <  [$.o1h]
+.l3e:	mov x3,    [$4]
+	xug x3,    [$.o1l]
+	rfn c:x3,  c		; x3 <= [$.o1l]
+.l3x:	sub c,     1		; x3 >  [$.o1l]: Remove the +1
+	rfn c:x3,  c
+.l3o:	mov c,     [$5]		; Multiplication overflow: Remove the +1
+	jms .l3x
+
+.l1:	; Special return for a divisor of 1
+
+	mov c,     [$.o1h]
+	rfn x3,    [$.o1l]
 
 
 
@@ -479,6 +566,7 @@ us_rec32_i:
 	mov x3,    a		; x0:x3 = b:a >> 3
 	mov x0,    b
 	shr c:x0,  3
+	jnz x0,    .xdvj	; x0 >= 0x80000, approximate with division
 	src x3,    3		; x3 is used for comparing
 
 	; The branch block as output from nrbranch is optimized here: the leaf
@@ -493,7 +581,7 @@ us_rec32_i:
 	jms .x707		; 0x23A6 < x3 <= 0x7071
 	xug x3,    0x859E	; 0x859E < x3
 	jms .x859		; 0x7071 < x3 <= 0x859E
-	jms .xdiv		; Do approximation with division
+.xdvj:	jms .xdiv		; Do approximation with division
 .x859:	mov x1,    0x0F53
 	jms .xend
 .x707:	xug x3,    0x3C88	; 0x3C88 < x3 <= 0x7071
