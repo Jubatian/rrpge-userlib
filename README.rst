@@ -7,7 +7,7 @@ RRPGE User Library
    :width: 100%
 
 :Author:    Sandor Zsuga (Jubatian)
-:Copyright: 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+:Copyright: 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
             License) extended as RRPGEvt (temporary version of the RRPGE
             License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
             root.
@@ -63,7 +63,7 @@ a suitable output: an "userlib.bin" and an "userlib.txt" file.
 On Windows building the generator for "userlib.txt" might not work, however
 using other tools it may be reproduced.
 
-The "userlib.bin" file is the raw binary to be loaded beginning with 0xF000 in
+The "userlib.bin" file is the raw binary to be loaded beginning with 0xE000 in
 the Code address space.
 
 The "userlib.txt" file is a 16 bit hexadecimal value list which may be copied
