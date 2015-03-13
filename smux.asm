@@ -62,13 +62,9 @@ us_smux_setptr_i:
 .dld	equ	1		; Display List Definition
 .shf	equ	0		; Temp. storage for shift (reuses Y position)
 
-	mov sp,    5
-
 	; Save CPU regs
 
-	mov [$2],  a
-	mov [$3],  b
-	mov [$4],  d
+	psh a, b, d
 
 	; Load display list size & prepare masks
 
@@ -111,9 +107,7 @@ us_smux_setptr_i:
 
 	; Restore CPU regs & exit
 
-	mov a,     [$2]
-	mov b,     [$3]
-	mov d,     [$4]
+	pop a, b, d
 	rfn c:x3,  x3
 
 
@@ -131,11 +125,9 @@ us_smux_reset_i:
 
 	; Save CPU regs
 
-	mov sp,    4
-	mov [$0],  a
-	mov [$1],  d
-	mov [$2],  x2
-	mov [$3],  xm
+	mov sp,    1
+	psh a, d, x2
+	mov [$0],  xm
 
 	; Get Display list size
 
@@ -188,10 +180,8 @@ us_smux_reset_i:
 
 	; Restore CPU regs & exit
 
-	mov a,     [$0]
-	mov d,     [$1]
-	mov x2,    [$2]
-	mov xm,    [$3]
+	mov xm,    [$0]
+	pop a, d, x2
 	rfn c:x3,  0
 
 
@@ -223,21 +213,15 @@ us_smux_add_i:
 .hgt	equ	2		; Height
 .btp	equ	3		; Bottom or Top add (bit 0 zero: bottom)
 .psy	equ	4		; Y position (2's complement)
+
 .mul	equ	5		; Width multiplier
 .dld	equ	6		; Display list definition
 
-	mov sp,    15
+	mov sp,    7
 
 	; Save CPU regs
 
-	mov [$7],  a
-	mov [$8],  b
-	mov [$9],  d
-	mov [$10], x0
-	mov [$11], x1
-	mov [$12], x2
-	mov [$13], xm
-	mov [$14], xb
+	psh a, b, d, x0, x1, x2, xm, xb
 
 	; Load display list definition
 
@@ -361,14 +345,7 @@ us_smux_add_i:
 
 .exit:	; Restore CPU regs & exit
 
-	mov a,     [$7]
-	mov b,     [$8]
-	mov d,     [$9]
-	mov x0,    [$10]
-	mov x1,    [$11]
-	mov x2,    [$12]
-	mov xm,    [$13]
-	mov xb,    [$14]
+	pop a, b, d, x0, x1, x2, xm, xb
 	rfn c:x3,  0
 
 
@@ -384,21 +361,15 @@ us_smux_addxy_i:
 .btp	equ	3		; Bottom or Top add (bit 0 zero: bottom)
 .psx	equ	4		; X position (2's complement)
 .psy	equ	5		; Y position (2's complement)
+
 .mul	equ	5		; Width multiplier
 .dld	equ	6		; Display list definition
 
-	mov sp,    15
+	mov sp,    7
 
 	; Save CPU regs
 
-	mov [$7],  a
-	mov [$8],  b
-	mov [$9],  d
-	mov [$10], x0
-	mov [$11], x1
-	mov [$12], x2
-	mov [$13], xm
-	mov [$14], xb
+	psh a, b, d, x0, x1, x2, xm, xb
 
 	; Push stuff around a bit to make it right for jumping into
 	; us_dlist_add_i: load X position in A, and fill the Y position in
@@ -477,20 +448,14 @@ us_smux_addlist_i:
 .hgt	equ	2		; Height
 .btp	equ	3		; Bottom or Top add (bit 0 zero: bottom)
 .psy	equ	4		; Y position (2's complement)
+
 .dld	equ	5		; Display list definition
 
-	mov sp,    14
+	mov sp,    6
 
 	; Save CPU regs
 
-	mov [$6],  a
-	mov [$7],  b
-	mov [$8],  d
-	mov [$9],  x0
-	mov [$10], x1
-	mov [$11], x2
-	mov [$12], xm
-	mov [$13], xb
+	psh a, b, d, x0, x1, x2, xm, xb
 
 	; Load display list definition
 
@@ -600,12 +565,5 @@ us_smux_addlist_i:
 
 .exit:	; Restore CPU regs & exit
 
-	mov a,     [$6]
-	mov b,     [$7]
-	mov d,     [$8]
-	mov x0,    [$9]
-	mov x1,    [$10]
-	mov x2,    [$11]
-	mov xm,    [$12]
-	mov xb,    [$13]
+	pop a, b, d, x0, x1, x2, xm, xb
 	rfn c:x3,  0

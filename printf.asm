@@ -96,18 +96,11 @@ us_printf_core_i:
 .ret	equ	2		; Return address (reuses .idx)
 .tmp	equ	3		; Temporary storage (reuses .pr0)
 
-	mov sp,    23
+	mov sp,    16
 
 	; Save CPU regs
 
-	mov x3,    16
-	mov [$x3], a
-	mov [$x3], b
-	mov [$x3], d
-	mov [$x3], x0
-	mov [$x3], x1
-	mov [$x3], x2
-	mov [$x3], xm
+	psh a, b, d, x0, x1, x2, xm, xb
 
 	; Prepare for character processing
 
@@ -585,14 +578,7 @@ us_printf_core_i:
 
 .exit:	; Restore CPU regs & return
 
-	mov x3,    16
-	mov a,     [$x3]
-	mov b,     [$x3]
-	mov d,     [$x3]
-	mov x0,    [$x3]
-	mov x1,    [$x3]
-	mov x2,    [$x3]
-	mov xm,    [$x3]
+	pop a, b, d, x0, x1, x2, xm, xb
 	jma [$.ret]
 
 
@@ -607,11 +593,9 @@ us_printf_tobcd_i:
 
 	; Save CPU regs & Load inputs
 
-	mov sp,    4
-	mov [$2],  a
+	psh a, x2
 	xch [$.inh], x1
 	xch [$.inl], x0
-	mov [$3],  x2
 	mov x2,    32		; Number of steps remaining (32 bit input)
 
 	; Produce result in d:a:x3 first, 'c' is needed for carry-overs
@@ -742,8 +726,7 @@ us_printf_tobcd_i:
 .fin:	; BCD number generated, finish and return.
 
 	mov c,     a		; Result in d:c:x3
-	mov a,     [$2]
 	mov x1,    [$.inh]
 	mov x0,    [$.inl]
-	mov x2,    [$3]
+	pop a, x2
 	rfn

@@ -192,16 +192,13 @@ us_tmap_blit_i:
 ; The same way like above, divison is not used within the area blit loops.
 ;
 
-	mov sp,    19
+	mov sp,    16
 
 	; Save CPU registers
 
 	xch [$3],  a		; Also load width parameter
 	xch [$4],  b		; Also load height parameter
-	mov x3,    16
-	mov [$x3], x0
-	mov [$x3], x1
-	mov [$x3], x2
+	psh x0, x1, x2
 
 	; If either widht or height is zero, no output
 
@@ -372,10 +369,7 @@ us_tmap_blit_i:
 
 .exit:	mov a,     [$3]
 	mov b,     [$4]
-	mov x3,    16
-	mov x0,    [$x3]
-	mov x1,    [$x3]
-	mov x2,    [$x3]
+	pop x0, x1, x2
 	rfn c:x3,  0
 
 .col:	; Column blit (width is set 1)

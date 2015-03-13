@@ -175,12 +175,9 @@ us_cr_cbyte_getnc_i:
 
 .entr:	; Common handler with PRAM loader
 
-	mov sp,    3
-
 	; Save CPU registers
 
-	mov [$1],  a
-	mov [$2],  d
+	psh a, d
 
 	; Decode by table
 
@@ -208,8 +205,7 @@ us_cr_cbyte_getnc_i:
 
 	; Restore CPU registers & exit
 
-	mov a,     [$1]
-	mov d,     [$2]
+	pop a, d
 	rfn x3,    [P3_RW]	; UTF-32, low
 
 

@@ -356,15 +356,14 @@ us_rec32_i:
 .inh	equ	0		; Input, high
 .inl	equ	1		; Input, low
 
-	mov sp,    6
+	mov sp,    4
 
 	; Save registers & load divider. Stack positions 2 and 3 are used for
 	; temporaries.
 
 	xch [$0],  b		; Also loads divider high
 	xch [$1],  a		; Also loads divider low
-	mov [$4],  x0
-	mov [$5],  x1
+	psh x0, x1
 
 	; Main branch out, favoring the most expensive paths first
 
@@ -799,8 +798,7 @@ us_rec32_i:
 
 	mov b,     [$0]
 	mov a,     [$1]
-	mov x0,    [$4]
-	mov x1,    [$5]
+	pop x0, x1
 	rfn
 
 
@@ -886,12 +884,9 @@ us_sqrt32_i:
 .inh	equ	0		; Input, high
 .inl	equ	1		; Input, low
 
-	mov sp,    4
-
 	; Save registers
 
-	mov [$2],  a
-	mov [$3],  b
+	psh a, b
 
 	; Set up, and calculate first 3 digits of square root
 
@@ -1051,8 +1046,7 @@ us_sqrt32_i:
 
 .exit:	; Restore regs & return
 
-	mov a,     [$2]
-	mov b,     [$3]
+	pop a, b
 	rfn c:x3,  x3
 
 .ffff:	mov x3,    0xFFFF	; 0xFFFF return for max input

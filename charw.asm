@@ -165,16 +165,11 @@ us_cwr_cbyte_setnc_i:
 .u4h	equ	1		; UTF-32 input, high
 .u4l	equ	2		; UTF-32 input, low
 
-	mov sp,    7
-
 	; Save CPU registers & provide entry point
 
-	mov [$6],  x2
+	psh a, b, d, x2
 	mov x2,    us_cwr_cchar
-.entr:	mov [$3],  a
-	mov [$4],  b
-	mov [$5],  d
-
+.entr:
 	; Look up character
 
 	mov x3,    [$.opt]
@@ -188,10 +183,7 @@ us_cwr_cbyte_setnc_i:
 
 	; Restore CPU regs & return
 
-	mov d,     [$5]
-	mov a,     [$3]
-	mov b,     [$4]
-	mov x2,    [$6]
+	pop a, b, d, x2
 	rfn c:x3,  0
 
 
@@ -271,11 +263,9 @@ us_cwr_pbyte_setnc_i:
 .u4h	equ	1		; UTF-32 input, high
 .u4l	equ	2		; UTF-32 input, low
 
-	mov sp,    7
-
 	; Save CPU registers & transfer
 
-	mov [$6],  x2
+	psh a, b, d, x2
 	mov x2,    us_cwr_pchar
 	jms us_cwr_cbyte_setnc_i.entr
 
@@ -369,18 +359,11 @@ us_cwr_cutf8_setnc_i:
 .u4h	equ	1		; UTF-32 input, high
 .u4l	equ	2		; UTF-32 input, low
 
-	mov sp,    9
-
 	; Save CPU registers & provide entry point
 
-	mov [$8],  x2
+	psh a, b, d, x0, x1, x2
 	mov x2,    us_cwr_cchar
-.entr:	mov [$3],  a
-	mov [$4],  b
-	mov [$5],  x0
-	mov [$6],  x1
-	mov [$7],  d
-
+.entr:
 	; Get UTF-8 sequence of character
 
 	jfa us_utf8f32_i {[$.u4h], [$.u4l]}
@@ -406,12 +389,7 @@ us_cwr_cutf8_setnc_i:
 
 	; Restore CPU regs & return
 
-	mov d,     [$7]
-	mov a,     [$3]
-	mov b,     [$4]
-	mov x0,    [$5]
-	mov x1,    [$6]
-	mov x2,    [$8]
+	pop a, b, d, x0, x1, x2
 	rfn c:x3,  0
 
 
@@ -489,11 +467,9 @@ us_cwr_putf8_setnc_i:
 .u4h	equ	1		; UTF-32 input, high
 .u4l	equ	2		; UTF-32 input, low
 
-	mov sp,    9
-
 	; Save CPU registers & transfer
 
-	mov [$8],  x2
+	psh a, b, d, x0, x1, x2
 	mov x2,    us_cwr_pchar
 	jms us_cwr_cutf8_setnc_i.entr
 

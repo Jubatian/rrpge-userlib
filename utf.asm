@@ -205,13 +205,11 @@ us_idfutf32_i:
 	xug x3,    127
 	rfn			; Less than 128, straight return (in X3)
 
-.main:	mov sp,    9
+.main:	mov sp,    6
 
 	; Save CPU regs
 
-	mov [$6],  x2
-	mov [$7],  a
-	mov [$8],  b
+	psh a, b, x2
 
 	; Init PRAM pointer 3 for table read.
 
@@ -276,7 +274,5 @@ us_idfutf32_i:
 
 	; Restore CPU regs & exit
 
-.exit:	mov x2,    [$6]
-	mov a,     [$7]
-	mov b,     [$8]
+.exit:	pop a, b, x2
 	rfn c:x3,  x3

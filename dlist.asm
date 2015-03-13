@@ -24,14 +24,9 @@ us_dlist_setptr_i:
 .psy	equ	1		; Y position
 .dld	equ	2		; Display List Definition
 
-	mov sp,    7
-
 	; Save CPU regs
 
-	mov [$3],  a
-	mov [$4],  b
-	mov [$5],  d
-	mov [$6],  x0
+	psh a, b, d, x0
 
 	; Load display list size & prepare masks
 
@@ -86,10 +81,7 @@ us_dlist_setptr_i:
 
 	; Restore CPU regs & exit
 
-	mov a,     [$3]
-	mov b,     [$4]
-	mov d,     [$5]
-	mov x0,    [$6]
+	pop a, b, d, x0
 	rfn c:x3,  x3
 
 
@@ -105,14 +97,14 @@ us_dlist_add_i:
 .lcl	equ	3		; Display list column to add to
 .dld	equ	4		; Display List Definition
 .psy	equ	5		; Y position (2's complement)
+
 .mul	equ	6		; Width multiplier
 
-	mov sp,    9
+	mov sp,    7
 
 	; Save CPU regs
 
-	mov [$7],  a
-	mov [$8],  d
+	psh a, d
 
 	; Calculate source width multiplier so to know how many to add to the
 	; source line select to advance one line. The multiplier stays one if
@@ -188,8 +180,7 @@ us_dlist_add_i:
 
 .exit:	; Restore CPU regs & exit
 
-	mov a,     [$7]
-	mov d,     [$8]
+	pop a, d
 	rfn c:x3,  0
 
 
@@ -206,14 +197,14 @@ us_dlist_addxy_i:
 .dld	equ	4		; Display List Definition
 .psx	equ	5		; X position (2's complement)
 .psy	equ	6		; Y position (2's complement)
+
 .mul	equ	6		; Width multiplier
 
-	mov sp,    9
+	mov sp,    7
 
 	; Save CPU regs
 
-	mov [$7],  a
-	mov [$8],  d
+	psh a, d
 
 	; Push stuff around a bit to make it right for jumping into
 	; us_dlist_add_i: load X position in A, and fill the Y position in
@@ -288,12 +279,9 @@ us_dlist_addbg_i:
 .dld	equ	3		; Display List Definition
 .psy	equ	4		; Y position (2's complement)
 
-	mov sp,    7
-
 	; Save CPU regs
 
-	mov [$5],  a
-	mov [$6],  d
+	psh a, d
 
 	; Clip the graphics component if needed. If partial from the top, the
 	; render command itself also alters so respecting the first visible
@@ -346,8 +334,7 @@ us_dlist_addbg_i:
 
 .exit:	; Restore CPU regs & exit
 
-	mov a,     [$5]
-	mov d,     [$6]
+	pop a, d
 	rfn c:x3,  0
 
 

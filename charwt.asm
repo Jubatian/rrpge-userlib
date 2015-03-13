@@ -154,12 +154,9 @@ us_cw_tile_setnc_i:
 .u4h	equ	1		; UTF-32, high
 .u4l	equ	2		; UTF-32, low
 
-	mov sp,    5
-
 	; Save CPU registers
 
-	mov [$3],  a
-	mov [$4],  b
+	psh a, b
 
 	; Look up character
 
@@ -200,8 +197,7 @@ us_cw_tile_setnc_i:
 .exit:	; Restore CPU regs & return
 
 	mov xm3,   PTR16I
-	mov a,     [$3]
-	mov b,     [$4]
+	pop a, b
 	rfn c:x3,  0
 
 .nlp:	; New line (from common end check)

@@ -296,14 +296,11 @@ us_fastmap_draw_i:
 ; cell granularity, when the tile map is on boundary, one extra tile is drawn.
 ;
 
-	mov sp,    18
+	mov sp,    14
 
 	; Save CPU regs
 
-	mov [$14], a
-	mov [$15], b
-	mov [$16], x0
-	mov [$17], x1
+	psh a, b, x0, x1
 
 	; Load elements of the structure
 
@@ -656,8 +653,5 @@ us_fastmap_draw_i:
 
 	; Restore CPU regs & exit
 
-.exit:	mov a,     [$14]
-	mov b,     [$15]
-	mov x0,    [$16]
-	mov x1,    [$17]
+.exit:	pop a, b, x0, x1
 	rfn c:x3,  0
