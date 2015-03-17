@@ -125,9 +125,7 @@ us_smux_reset_i:
 
 	; Save CPU regs
 
-	mov sp,    1
-	psh a, d, x2
-	mov [$0],  xm
+	psh a, d, x2, xm
 
 	; Get Display list size
 
@@ -180,8 +178,7 @@ us_smux_reset_i:
 
 	; Restore CPU regs & exit
 
-	mov xm,    [$0]
-	pop a, d, x2
+	pop a, d, x2, xm
 	rfn c:x3,  0
 
 

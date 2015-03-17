@@ -96,11 +96,13 @@ us_printf_core_i:
 .ret	equ	2		; Return address (reuses .idx)
 .tmp	equ	3		; Temporary storage (reuses .pr0)
 
-	mov sp,    16
+	; Save CPU regs (Note: .tmp is only used if there is at least one
+	; parameter to be formatted by printf, so no need to set stack
+	; pointer: the pushes will happen above the parameter list proper. The
+	; behavior is undefined when calling with inappropriate parameter
+	; count anyway)
 
-	; Save CPU regs
-
-	psh a, b, d, x0, x1, x2, xm, xb
+	psh a, b, d, x0, x1, x2, xm
 
 	; Prepare for character processing
 
@@ -578,7 +580,7 @@ us_printf_core_i:
 
 .exit:	; Restore CPU regs & return
 
-	pop a, b, d, x0, x1, x2, xm, xb
+	pop a, b, d, x0, x1, x2, xm
 	jma [$.ret]
 
 

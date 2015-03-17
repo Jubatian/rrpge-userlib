@@ -374,9 +374,7 @@ us_cr_putf8_getnc_i:
 us_cr_cchar_f:
 .opt	equ	0		; Object pointer
 
-	mov sp,    3
-	mov [$1],  x2
-	mov [$2],  xm
+	psh x2, xm
 
 	; Load character
 
@@ -392,8 +390,7 @@ us_cr_cchar_f:
 
 	; Restore CPU regs & return
 
-	mov xm,    [$2]
-	mov x2,    [$1]
+	pop x2, xm
 	rfn c:x3,  c
 
 
@@ -405,8 +402,7 @@ us_cr_cchar_f:
 us_cr_pchar_f:
 .opt	equ	0		; Object pointer
 
-	mov sp,    2
-	mov [$1],  a
+	psh a
 
 	; Load character
 
@@ -425,5 +421,5 @@ us_cr_pchar_f:
 
 	; Restore CPU regs & return
 
-	mov a,     [$1]
+	pop a
 	rfn c:x3,  [P3_RW_NI]

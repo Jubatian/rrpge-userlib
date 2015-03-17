@@ -592,13 +592,9 @@ us_tmap_setptr_i:
 .tlp	equ	0		; Tilemap pointer
 .ptr	equ	1		; Pointer to use
 
-	mov sp,    4
-
 	; Save CPU registers
 
-	xch [$1],  x2		; Also load $.ptr
-	mov [$2],  xm
-	mov [$3],  a
+	psh a, x2, xm
 
 	; Set up pointer
 
@@ -611,6 +607,7 @@ us_tmap_setptr_i:
 	mov c,     a
 
 	mov xm2,   PTR16I
+	mov x2,    [$.ptr]
 	and x2,    3
 	shl x2,    3
 	add x2,    P0_AH
@@ -626,7 +623,5 @@ us_tmap_setptr_i:
 
 	; Return is also OK in C:X3. Restore CPU regs. & exit
 
-	mov x2,    [$1]
-	mov xm,    [$2]
-	mov a,     [$3]
+	pop a, x2, xm
 	rfn
