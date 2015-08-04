@@ -109,24 +109,6 @@ us_dbuf_i_framecall:
 
 
 ;
-; Internal to correct a display list definition, adding current mode flags.
-;
-; Param0: Display list definition to patch up.
-; Ret.X3: Patched display list definition
-;
-us_dbuf_i_dlfix:
-
-.dls	equ	0		; Display list definition to fix
-
-	jfa us_dloff_clip {[$.dls]}
-	mov c,     0x3000	; Display mode flags
-	and c,     [P_GDG_DLDEF]
-	or  x3,    c		; Add them to the fixed display list definition
-	rfn
-
-
-
-;
 ; Implementation of us_dbuf_init
 ;
 us_dbuf_init_i:
@@ -137,18 +119,17 @@ us_dbuf_init_i:
 
 	; Set Display List 1, so frame transition begins
 
-	jfa us_dbuf_i_dlfix {[$.dl1]}
+	mov x3,    [$.dl1]
 	mov [P_GDG_DLDEF], x3
 
 	; Propagate Display List 1's size to Display List 2, and set the
 	; internal display list variables.
 
 	mov [us_dbuf_dl], x3
-	and x3,    3
-	mov c,     0xFFFC
+	and x3,    0x0030
+	mov c,     0xFFCF
 	and [$.dl2], c
-	or  [$.dl2], x3
-	jfa us_dbuf_i_dlfix {[$.dl2]}
+	or  x3,    [$.dl2]
 	mov [us_dbuf_wl], x3
 
 	; Call init hooks
@@ -166,9 +147,9 @@ us_dbuf_init_i:
 
 	jfa us_dbuf_i_flipcall
 
-	; Wait for frame end by the Frame rate limiter flag
+	; Wait for frame end by the Frame complete flag
 
-.lp:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
+.lp:	xbc [P_GDG_STAT], 15	; Frame complete
 	jms .lp
 
 	; Set up display list clear
@@ -200,10 +181,9 @@ us_dbuf_flip_i:
 .lpe:	xbc [P_GFIFO_STAT], 0	; FIFO is non-empty or peripheral is working
 	jms .lp
 
-	; Flip buffers. The display list which becomes the work buffer is also
-	; sanitized to make sure it contains the proper mode flags.
+	; Flip buffers.
 
-	jfa us_dbuf_i_dlfix {[us_dbuf_dl]}
+	mov x3,    [us_dbuf_dl]
 	xch x3,    [us_dbuf_wl]
 	mov [P_GDG_DLDEF], x3
 	mov [us_dbuf_dl], x3
@@ -234,7 +214,7 @@ us_dbuf_getlist_i:
 	; Wait frame end, then call frame hooks
 
 .lp:	jsv kc_dly_delay {5000}
-.lpe:	xbc [P_GDG_DLDEF], 15	; Frame rate limiter
+.lpe:	xbc [P_GDG_STAT], 15	; Frame complete
 	jms .lp
 	jfa us_dbuf_i_framecall
 	jms .exit

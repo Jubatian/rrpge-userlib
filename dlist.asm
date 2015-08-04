@@ -31,12 +31,8 @@ us_dlist_setptr_i:
 	; Load display list size & prepare masks
 
 	mov a,     [$.dld]
+	shr a,     4
 	and a,     3		; Display list entry size
-	mov d,     0xFFFC
-	shl d,     a
-	and d,     0x07FC	; Mask for display list offset
-	xbc [$.dld], 13		; Double scan?
-	add a,     1		; 0 / 1 / 2 / 3 / 4
 	add a,     7		; 0 => 4 * 32 bit entries etc.
 
 	; Calculate bit offset within display list
@@ -49,8 +45,11 @@ us_dlist_setptr_i:
 
 	; Calculate absolute display list offset
 
-	and d,     [$.dld]	; Apply mask on display list def. into the mask
-	shl c:d,   14		; Bit offset of display list
+	mov d,     [$.dld]
+	shr c:d,   4
+	or  d,     c
+	and d,     0xFFFC	; Offset bits recovered as 512 bit offset
+	shl c:d,   9		; Bit offset of display list
 	mov x0,    c
 	add c:d,   [$.psy]
 	adc x0,    b		; Start offset in x0:d acquired
@@ -58,7 +57,7 @@ us_dlist_setptr_i:
 	; Prepare PRAM pointer fill. In 'c' prepares a zero for incr. high
 
 	mov b,     1
-	shl c:b,   a		; 128 / 256 / 512 / 1024 / 2048 bit per line
+	shl c:b,   a		; 128 / 256 / 512 / 1024 bit per line
 	mov a,     4		; 16 bit pointer, always increment
 
 	; Fill PRAM pointers
@@ -106,29 +105,27 @@ us_dlist_add_i:
 
 	psh a, d
 
-	; Calculate source width multiplier so to know how many to add to the
-	; source line select to advance one line. The multiplier stays one if
-	; the source is a shift source.
+	; Retrieve source width to know how much to add to the source line
+	; select to advance one line.
 
-	mov x3,    [$.rch]
+	mov x3,    [$.rcl]
 	shr x3,    12
 	and x3,    7		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     [x3]		; Load source definition
-	xbc d,     4
-	mov d,     0		; Shift source: multiplier is 1
-	and d,     0xF
-	shl d,     1
-	add d,     1		; Width multiplier: 1 to 31, odd
+	mov d,     0xFF
+	and d,     [x3]		; Load source definition
 	mov [$.mul], d
+	xbs d,     7
+	jms .entr		; Not shift source, width is OK
+	mov x3,    1
+	shl x3,    d
+	mov [$.mul], x3
 
 .entr:	; Clip the graphics component if needed. If partial from the top, the
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
+	mov x3,    400
 	xbs [$.psy], 15
 	jms .ntc		; Positive or zero: no top clip required
 	mov a,     [$.psy]
@@ -198,7 +195,7 @@ us_dlist_addxy_i:
 .psx	equ	5		; X position (2's complement)
 .psy	equ	6		; Y position (2's complement)
 
-.mul	equ	6		; Width multiplier
+.mul	equ	6		; Width
 
 	mov sp,    7
 
@@ -213,54 +210,36 @@ us_dlist_addxy_i:
 	mov a,     [$.psy]
 	xch a,     [$.psx]
 
-	; Calculate source width multiplier so to know how many to add to the
-	; source line select to advance one line. Shift source is not checked
-	; (in this routine using a shift source is useless).
+	; Retrieve source width to know how much to add to the source line
+	; select to advance one line. Shift source is ignored (in this routine
+	; a shift source is useless).
 
-	mov x3,    [$.rch]
+	mov x3,    [$.rcl]
 	shr x3,    12
 	and x3,    7		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     [x3]		; Load source definition
-	and d,     0xF
-	shl d,     1
-	add c:d,   1		; Width multiplier: 1 to 31, odd (c is zeroed)
+	mov d,     0x7F
+	and d,     [x3]		; Load source definition
 	mov [$.mul], d
-
-	; Set C to one for 8 bit mode, to be used in subsequend mode specific
-	; adjustments.
-
-	xbc [$.dld], 12		; 4 bit mode if clear
-	mov c,     1		; 1 in 8 bit mode, 0 in 4 bit mode
-
-	; Calculate X high limit
-
-	mov x3,    640
-	shr x3,    c		; 320 in 8 bit mode
 
 	; Check on-screen
 
-	xug x3,    a		; Off-screen to the right?
+	xug 640,   a		; Off-screen to the right?
 	jms us_dlist_add_i.exit
 	xbs a,     15		; Signed? If so, maybe partly on-screen on left.
 	jms .onsc
 
 	; Negative X: possibly partly on-screen. Need to check this situation.
 
-	mov x3,    [$.rch]
-	shl x3,    5
-	and x3,    7		; Source line size shift
-	sbc x3,    0xFFFD	; Adjust: +3 (8 pixels / cell) for 4 bit, +2 (4 pixels / cell) for 8 bit mode
 	mov d,     [$.mul]
-	shl d,     x3		; Width of graphic element in pixels
+	shl d,     3		; Source width in pixels
 	add d,     a
 	xsg d,     0		; 1 or more (signed): graphics is on-screen
 	jms us_dlist_add_i.exit
 
 	; Graphics on-screen, render it
 
-.onsc:	shl a,     c		; Double X position for 8 bit mode
-	and a,     0x03FF	; 10 bits for shift / position
+.onsc:	and a,     0x03FF	; 10 bits for shift / position
 	mov d,     0xFC00	; Preserve high part of command
 	and [$.rcl], d
 	or  [$.rcl], a
@@ -287,9 +266,7 @@ us_dlist_addbg_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
+	mov x3,    400
 	xbs [$.psy], 15
 	jms .ntc		; Positive or zero: no top clip required
 	mov a,     [$.psy]
@@ -361,9 +338,7 @@ us_dlist_addlist_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
+	mov x3,    400
 	xbs [$.psy], 15
 	jms .ntc		; Positive or zero: no top clip required
 	mov a,     [$.psy]
@@ -430,20 +405,23 @@ us_dlist_clear_i:
 
 .dld	equ	0		; Display List Definition
 
-	; Load display list size & prepare masks
+	; Load display list offset and size
+
+	mov x3,    [$.dld]
+	shr c:x3,  4
+	or  x3,    c
+	and x3,    0xFFFC	; Offset bits recovered as 512 bit offset
 
 	mov c,     [$.dld]
+	shr c,     4
 	and c,     3		; Display list entry size
-	mov x3,    0xFFFC
-	shl x3,    c
-	and x3,    0x07FC	; Mask for display list offset
 
 	; Prepare and fire a PRAM set
 
-	and [$.dld], x3		; Mask out offset bits in list
+	mov [$.dld], x3
 	mov x3,    3200		; Smallest display list size (400 * 8 words)
 	shl x3,    c		; Display list's size in x3
-	mov c,     10		; Shift offset to word
+	mov c,     5		; Shift offset to word (16 bit offset)
 	shl c:[$.dld], c
 	jfa us_set_p_i {c, [$.dld], 0, x3}
 

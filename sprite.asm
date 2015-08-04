@@ -55,9 +55,8 @@ us_sprite_reset_i:
 	; Get total height & Display list size
 
 	mov c,     [P_GDG_DLDEF]
-	mov x3,    4		; Smallest display list size is normally 4 entries
-	xbc c,     13		; Double scan?
-	mov x3,    8		; But 8 entries when double scanned
+	mov x3,    4		; Smallest display list size is 4 entries
+	shr c,     4
 	and c,     3
 	shl x3,    c		; 'x3': Count of entries on a display list row
 

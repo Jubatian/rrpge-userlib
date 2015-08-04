@@ -60,7 +60,6 @@ us_smux_setptr_i:
 
 .psy	equ	0		; Y position
 .dld	equ	1		; Display List Definition
-.shf	equ	0		; Temp. storage for shift (reuses Y position)
 
 	; Save CPU regs
 
@@ -69,12 +68,8 @@ us_smux_setptr_i:
 	; Load display list size & prepare masks
 
 	mov a,     [$.dld]
+	shr a,     4
 	and a,     3		; Display list entry size
-	mov d,     0xFFFC
-	shl d,     a
-	and d,     0x07FC	; Mask for display list offset
-	xbc [$.dld], 13		; Double scan?
-	add a,     1		; 0 / 1 / 2 / 3 / 4
 	add a,     7		; 0 => 4 * 32 bit entries etc.
 
 	; Calculate bit offset within display list
@@ -84,8 +79,11 @@ us_smux_setptr_i:
 
 	; Calculate absolute display list offset
 
-	and d,     [$.dld]	; Apply mask on display list def. into the mask
-	shl c:d,   14		; Bit offset of display list
+	mov d,     [$.dld]
+	shr c:d,   4
+	or  d,     c
+	and d,     0xFFFC	; Offset bits recovered as 512 bit offset
+	shl c:d,   9		; Bit offset of display list
 	add b,     c
 	add c:d,   [$.psy]
 	add b,     c		; Start offset in b:d acquired
@@ -130,9 +128,8 @@ us_smux_reset_i:
 	; Get Display list size
 
 	mov c,     [P_GDG_DLDEF]
-	mov x3,    4		; Smallest display list size is normally 4 entries
-	xbc c,     13		; Double scan?
-	mov x3,    8		; But 8 entries when double scanned
+	mov x3,    4		; Smallest display list size is 4 entries
+	shr c,     4
 	and c,     3
 	shl x3,    c		; 'x3': Count of entries on a display list row
 
@@ -225,26 +222,23 @@ us_smux_add_i:
 	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 
-	; Calculate source width multiplier so to know how many to add to the
-	; source line select to advance one line.
+	; Retrieve source width to know how much to add to the source line
+	; select to advance one line. Shift source is ignored (in this routine
+	; a shift source is useless).
 
-	mov x3,    [$.rch]
+	mov x3,    [$.rcl]
 	shr x3,    12
 	and x3,    7		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     [x3]		; Load source definition
-	and d,     0xF
-	shl d,     1
-	add d,     1		; Width multiplier: 1 to 31, odd
+	mov d,     0x7F
+	and d,     [x3]		; Load source definition
 	mov [$.mul], d
 
 .entr:	; Clip the graphics component if needed. If partial from the top, the
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
+	mov x3,    400
 	xbs [$.psy], 15
 	jms .ntc		; Positive or zero: no top clip required
 	mov a,     [$.psy]
@@ -380,54 +374,36 @@ us_smux_addxy_i:
 	jfa us_dbuf_getlist_i
 	mov [$.dld], x3
 
-	; Calculate source width multiplier so to know how many to add to the
-	; source line select to advance one line. Shift source is not checked
-	; (in this routine using a shift source is useless).
+	; Retrieve source width to know how much to add to the source line
+	; select to advance one line. Shift source is ignored (in this routine
+	; a shift source is useless).
 
-	mov x3,    [$.rch]
+	mov x3,    [$.rcl]
 	shr x3,    12
 	and x3,    7		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     [x3]		; Load source definition
-	and d,     0xF
-	shl d,     1
-	add c:d,   1		; Width multiplier: 1 to 31, odd (c is zeroed)
+	mov d,     0x7F
+	and d,     [x3]		; Load source definition
 	mov [$.mul], d
-
-	; Set C to one for 8 bit mode, to be used in subsequend mode specific
-	; adjustments.
-
-	xbc [$.dld], 12		; 4 bit mode if clear
-	mov c,     1		; 1 in 8 bit mode, 0 in 4 bit mode
-
-	; Calculate X high limit
-
-	mov x3,    640
-	shr x3,    c		; 320 in 8 bit mode
 
 	; Check on-screen
 
-	xug x3,    a		; Off-screen to the right?
+	xug 640,   a		; Off-screen to the right?
 	jms us_smux_add_i.exit
 	xbs a,     15		; Signed? If so, maybe partly on-screen on left.
 	jms .onsc
 
 	; Negative X: possibly partly on-screen. Need to check this situation.
 
-	mov x3,    [$.rch]
-	shl x3,    5
-	and x3,    7		; Source line size shift
-	sbc x3,    0xFFFD	; Adjust: +3 (8 pixels / cell) for 4 bit, +2 (4 pixels / cell) for 8 bit mode
 	mov d,     [$.mul]
-	shl d,     x3		; Width of graphic element in pixels
+	shl d,     3		; Source width in pixels
 	add d,     a
 	xsg d,     0		; 1 or more (signed): graphics is on-screen
 	jms us_smux_add_i.exit
 
 	; Graphics on-screen, render it
 
-.onsc:	shl a,     c		; Double X position for 8 bit mode
-	and a,     0x03FF	; 10 bits for shift / position
+.onsc:	and a,     0x03FF	; 10 bits for shift / position
 	mov d,     0xFC00	; Preserve high part of command
 	and [$.rcl], d
 	or  [$.rcl], a
@@ -463,9 +439,7 @@ us_smux_addlist_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
+	mov x3,    400
 	xbs [$.psy], 15
 	jms .ntc		; Positive or zero: no top clip required
 	mov a,     [$.psy]
