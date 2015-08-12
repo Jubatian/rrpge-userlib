@@ -29,10 +29,10 @@
 ;
 ; The blit configuration:
 ;
-; bit  9-15: Bits 1-7 of Pixel AND mask (bit 0 is always 1)
-; bit     8: If set, colorkey is Pixel AND mask, otherwise 0x00
+; bit 12-15: Colorkey
+; bit  8-11: Pixel AND mask
 ; bit  5- 7: Tile index layout (see specification)
-; bit     4: If set, 8 bit mode, otherwise 4 bit mode
+; bit     4: Unused
 ; bit     3: Colorkey enabled if set
 ; bit  0- 2: Pixel barrel rotate right
 ;
@@ -120,15 +120,12 @@ us_btile_acc_i:
 	mov [us_tile_mtil], x3	; Tile index layout on low 3 bits
 
 	mov x3,    c
-	and x3,    0x001F	; VBT, VCK, Pixel barrel rot; BB is zero, OK
+	and x3,    0x000F	; VCK, Pixel barrel rot; BB is zero, OK
 	mov [P_GFIFO_DATA], x3	; 0x0015: Blit control flags & src. barrel rot
-	mov [$0],  c
-	shr c,     8
-	bts c,     0		; AND mask lowest bit is always 1
-	mov x3,    c
-	shl x3,    8
-	xbc [$0],  8
-	or  x3,    c		; If bit8 was set, then colorkey is AND mask
+	mov x3,    0x0F00
+	and x3,    c
+	shr c,     12
+	or  x3,    c
 	mov [P_GFIFO_DATA], x3	; 0x0016: AND mask and Colorkey
 
 	rfn c:x3,  0
@@ -167,27 +164,11 @@ us_btile_blit_i:
 	jms .ti5
 	jms .ti6
 
-.ti7:	mov c,     [$.idx]
-	shr c,     8
-	and c,     0x00E0	; 3 Pixel OR mask bits, rest zero
+.ti7:
+.ti6:
+.ti5:	mov c,     0
 	mov [P_GFIFO_DATA], c
-	mov c,     0x1FFF	; Tile index bits
-	and c,     [$.idx]
-	jms .tic
-
-.ti6:	mov c,     [$.idx]
-	shr c,     8
-	and c,     0x00F0	; 4 Pixel OR mask bits, rest zero
-	mov [P_GFIFO_DATA], c
-	mov c,     0x0FFF	; Tile index bits
-	and c,     [$.idx]
-	jms .tic
-
-.ti5:	mov c,     [$.idx]
-	shr c,     8
-	mov [P_GFIFO_DATA], c
-	mov c,     0x00FF	; Tile index bits
-	and c,     [$.idx]
+	mov c,     [$.idx]
 	jms .tic
 
 .ti4:	mov c,     [$.idx]

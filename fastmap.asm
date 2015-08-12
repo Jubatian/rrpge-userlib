@@ -19,25 +19,23 @@
 ;
 ; Word0: Used tile map's pointer
 ; Word1: Destination surface's pointer
-; Word2: Display list used rows (1 - 400 or 200; visible height)
-; Word3: Starting source line select value (15 bits)
+; Word2: Display list used rows (1 - 400; visible height)
+; Word3: Base source offset
 ; Word4: Current top-left tile X position
 ; Word5: Current top-left tile Y position
-; Word6: Full update request flag & Render command flags
-; Word7: Display list column to use (1 - 3, 7, 15, 31 or 63)
-; Word8: Display list Y start offset (0 - 399 or 199)
-; Word9: Source line select value range
+; Word6: Full update request flag & Render command config
+; Word7: Display list column to use (1 - 3, 7, 15 or 31)
+; Word8: Display list Y start offset (0 - 399)
+; Word9: Source offset range
 ;
 ; The source definitions to be used have to be set up manually in accordance
 ; with the destination surface (note: must be shift sources).
 ;
-; Full update request & Render command flags:
+; Full update request & Render command config:
 ;
-; bit    15: Combine with mask if clear
-; bit    14: Combine with colorkey if clear
-; bit 10-13: Mask / Colorkey value (as in render command, bits 10-13)
-; bit     9: If set, priority selector active (render command, bit 31)
-; bit  3- 8: Unused
+; bit 13-15: Source definition select (render command config)
+; bit 10-12: High half-palette select (render command config)
+; bit  3- 9: Unused
 ; bit     2: Expect Y scroll only if set
 ; bit     1: Expect X scroll only if set
 ; bit     0: Full update request if set
@@ -61,9 +59,28 @@ us_fastmap_new_i:
 .dlc	equ	3		; Display list column to use
 .dly	equ	4		; Display list start Y location
 .dlr	equ	5		; Display list count of used rows
-.sls	equ	6		; Starting source line select value
-.slr	equ	7		; Source line select value range
-.flg	equ	8		; Render command flags
+.flg	equ	6		; Render command configuration & flags
+
+	; Get destination surface base offset
+
+	jfa us_dsurf_get_i {[$.dss]}
+	mov c,     x3
+	mov x3,    [$.fmp]
+	add x3,    3
+	mov [x3],  c		; Saved base source offset
+
+	; Get destination surface partitioning setting and calculate source
+	; offset range from it
+
+	jfa us_dsurf_getpw_i {[$.dss]}
+	mov x3,    2
+	shl x3,    c
+	mov c,     x3
+	mov x3,    [$.fmp]
+	add x3,    9
+	mov [x3],  c		; Saved source offset range
+
+	; Produce remaining parameters
 
 	mov x3,    [$.fmp]
 	mov c,     [$.tms]
@@ -72,8 +89,7 @@ us_fastmap_new_i:
 	mov [x3],  c
 	mov c,     [$.dlr]
 	mov [x3],  c
-	mov c,     [$.sls]
-	mov [x3],  c
+	add x3,    1
 	mov c,     0
 	mov [x3],  c
 	mov [x3],  c
@@ -83,8 +99,6 @@ us_fastmap_new_i:
 	mov c,     [$.dlc]
 	mov [x3],  c
 	mov c,     [$.dly]
-	mov [x3],  c
-	mov c,     [$.slr]
 	mov [x3],  c
 	rfn c:x3,  0
 
@@ -110,11 +124,10 @@ us_fastmap_gethw_i:
 .fmp	equ	0		; Fast map structure pointer
 
 .dly	equ	1		; Display List used rows (Word2)
-.sls	equ	2		; Starting source line select (Word3)
 .tlh	equ	0		; Tile height
-.tlw	equ	3		; Tile width (cells)
+.tlw	equ	2		; Tile width (cells)
 .tmp	equ	0		; Tile map pointer
-.flg	equ	4		; Flags, for X and Y scroll expectations
+.flg	equ	3		; Flags, for source def & X and Y scroll expectations
 
 	mov sp,    5
 
@@ -126,9 +139,7 @@ us_fastmap_gethw_i:
 	add x3,    1
 	mov c,     [x3]
 	mov [$.dly], c		; Display list used rows (visible height)
-	mov c,     [x3]
-	mov [$.sls], c		; Starting source line select value
-	add x3,    2
+	add x3,    3
 	mov c,     [x3]
 	mov [$.flg], c		; Flags
 
@@ -138,15 +149,23 @@ us_fastmap_gethw_i:
 	mov [$.tlh], c
 	mov [$.tlw], x3
 
+	; Tile width doubles in X expanded mode
+
+	mov x3,    [$.flg]
+	shr x3,    13		; Source definition select
+	add x3,    P_GDG_SA0
+	mov c,     1
+	xbc [x3],  11
+	shl [$.tlw], c
+
 	; Extract display area width from the appropriate shift mode region
 	; register. Rescale it to tile boundary.
 
-	mov x3,    [$.sls]
-	shl x3,    14
-	and x3,    1		; Shift mode region select
-	add x3,    P_GDG_SMRA
-	mov x3,    [x3]		; Load appropriate shift mode region
-	shr x3,    8		; Output width in cells
+	mov x3,    [P_GDG_SMRA]
+	xbc [$.flg], 15
+	mov x3,    [P_GDG_SMRB]	; Load appropriate shift mode region
+	shr x3,    8
+	and x3,    0x7F		; Output width in cells
 	xbs [$.flg], 2		; Only Y scrolling expected: No extra tile
 	add x3,    [$.tlw]	; One tile wider to support scrolling
 	add x3,    [$.tlw]	; Fractional sizes rounded up to next boundary
@@ -260,7 +279,7 @@ us_fastmap_draw_i:
 
 .dld	equ	3		; Display List Definition to use
 .dly	equ	4		; Display List used rows (Word2)
-.sls	equ	5		; Starting source line select (Word3)
+.sof	equ	5		; Base source offset (Word3)
 .cpx	equ	6		; Current tile X (Word4)
 .cpy	equ	7		; Current tile Y (Word5)
 .tlh	equ	8		; Tile height
@@ -273,8 +292,9 @@ us_fastmap_draw_i:
 .wr1	equ	13		; Temp for wide blit (parameter 1)
 .dcu	equ	8		; Display list column to use (Word7)
 .dys	equ	9		; Display list Y start offset (Word8)
-.slr	equ	13		; Source line select value range (Word9)
+.sor	equ	13		; Source offset value range (Word9)
 .swr	equ	12		; Source wrap point
+.add	equ	10		; Source offset add value
 
 ;
 ; Some overall concepts
@@ -312,7 +332,7 @@ us_fastmap_draw_i:
 	jms .exit		; Zero height: Nothing to render
 	mov [$.dly], c		; Display list used rows (visible height)
 	mov c,     [x3]
-	mov [$.sls], c		; Starting source line select value
+	mov [$.sof], c		; Starting source line select value
 	mov c,     [x3]
 	mov [$.cpx], c		; Current tile X
 	mov c,     [x3]
@@ -330,12 +350,11 @@ us_fastmap_draw_i:
 	; Extract display area width from the appropriate shift mode region
 	; register.
 
-	mov x3,    [$.sls]
-	shl x3,    14
-	and x3,    1		; Shift mode region select
-	add x3,    P_GDG_SMRA
-	mov a,     [x3]		; Load appropriate shift mode region
-	shr a,     8		; Output width in cells
+	mov a,     [P_GDG_SMRA]
+	xbc [$.flg], 15
+	mov a,     [P_GDG_SMRB]	; Load appropriate shift mode region
+	shr a,     8
+	and a,     0x7F		; Output width in cells
 	xne a,     0
 	jms .exit		; Zero width: Nothing to render
 
@@ -344,6 +363,15 @@ us_fastmap_draw_i:
 	jfa us_tmap_gettilehw_i {x0}
 	mov [$.tlh], c
 	mov [$.tlw], x3
+
+	; Tile width doubles in X expanded mode
+
+	mov x3,    [$.flg]
+	shr x3,    13		; Source definition select
+	add x3,    P_GDG_SA0
+	mov c,     1
+	xbc [x3],  11
+	shl [$.tlw], c
 
 	; Rescale output width to tile boundary.
 
@@ -374,14 +402,11 @@ us_fastmap_draw_i:
 	mov [$.dld], x3		; Save display list definition
 
 	; Truncate X:Y positions to whole tile positions. X is also scaled
-	; down to cells, as 4 / 8 pixels per cell depending on mode. The
-	; positions code the new top left corner, and using the previous
-	; positions, they are used to determine what to blit.
+	; down to cells. The positions code the new top left corner, and using
+	; the previous positions, they are used to determine what to blit.
 
 	mov c,     [$.tlw]
-	shl c,     2
-	xbs [$.dld], 12		; If set, 8 bit mode
-	shl c,     1		; In 4 bit mode, 8 pixels per cell
+	shl c,     3		; 8 pixels / (line buffer) cell
 	mov a,     [$.psx]
 	div a,     c		; A: Xnew
 	mov b,     [$.psy]
@@ -538,32 +563,28 @@ us_fastmap_draw_i:
 	; the fast tile mapper structure
 
 	sub x3,    1
-	mov x0,    [x3]		; Load render command flags
+	mov x0,    0xFC00	; Only the render command config is needed
+	and x0,    [x3]		; Load render command configuration
 	mov c,     [x3]
 	mov [$.dcu], c		; Display list column to use
 	mov c,     [x3]
 	mov [$.dys], c		; Display list Y start
 	mov c,     [x3]
-	mov [$.slr], c		; Source line select value range
+	mov [$.sor], c		; Source line select value range
 
 	; Some sanity checks to achieve defined behavior in most cases (bad
 	; parameters => nothing drawn due to skipping display list fill).
 
 	mov c,     0		; Some zero checks
-	xeq c,     [$.dcu]	; Invalid column select check
-	xne c,     [$.slr]
+	xne c,     [$.dcu]	; Invalid column select check
 	jms .exit		; No source line select range
 	mov x3,    [$.dld]
 	and x3,    3		; Display list size (0 - 3)
-	xbc [$.dld], 13
-	add x3,    1		; Double scanned mode (1 - 4)
 	mov c,     4
-	shl c,     x3		; 4, 8, 16, 32, 64 maximum column count
+	shl c,     x3		; 4, 8, 16, 32 maximum column count
 	xug c,     [$.dcu]
 	jms .exit		; Invalid column select
 	mov x3,    400
-	xbc [$.dld], 13
-	shr x3,    1		; Double scanned mode (max height is 200 lines)
 	xug x3,    [$.dys]
 	jms .exit		; Too big Y start
 	mov c,     [$.dys]
@@ -571,45 +592,38 @@ us_fastmap_draw_i:
 	add x3,    1
 	xug x3,    c
 	jms .exit		; Y start + Used rows exceed max height
-	xbs [$.sls], 15		; Invalid source line select value start check
-	xbc [$.slr], 15
-	jms .exit		; Too large source line select range
-	mov c,     [$.sls]
-	add c,     [$.slr]
-	sub c,     1
-	xbc c,     15
-	jms .exit		; Source line select wraps improperly
 
-	; Prepare X, which will produce bits 0-9 of the render command.
+	; Prepare X, which will produce bits 0-9 of the render command, and
+	; combine into the render command config.
 
-	mov x3,    [$.psx]
-	xbc [$.dld], 12		; If set, 8 bit mode
-	shl x3,    1
-	and x3,    0x03FF
-
-	; Combine low word of render command into X0, keeping priority
-	; selector in register A
-
-	mov a,     0
-	xbc x0,    9
-	bts a,     15		; High bit of A is set when pri. select active
-	and x0,    0xFC00
+	mov x3,    0x03FF
+	and x3,    [$.psx]
 	or  x0,    x3
 
-	; Prepare Y, selecting the appropriate source line select value.
+	; Prepare Y, selecting the appropriate source offset. The source
+	; definition is used to determine the width of the surface.
 
-	mov x1,    [$.psy]
-	div c:x1,  [$.slr]
+	mov x3,    x0
+	shr x3,    13		; Source definition
+	add x3,    P_GDG_SA0
+	mov x3,    [x3]
+	and x3,    7		; Source width (1, 2, 4, 8, 16, 32, 64 or 128 cells)
+	mov c,     1
+	shl c,     x3
+	mov [$.add], c		; Source offset add value prepared
+	mov c,     [$.psy]
+	shl c,     x3
+	mov x1,    [$.sor]
+	xeq x1,    0
+	div c:c,   x1
 	mov x1,    c
-	add x1,    [$.sls]
-	or  x1,    a		; Priority selector
+	add x1,    [$.sof]
 
-	; Set up wrapping point for source line select
+	; Set up wrapping point for source offset
 
-	mov c,     [$.sls]
-	add c,     [$.slr]
+	mov c,     [$.sof]
+	add c,     [$.sor]
 	mov [$.swr], c
-	or  [$.swr], a		; Priority selector
 
 	; Set up for display list walking (PRAM pointer 2 for high word,
 	; pointer 3 for low word)
@@ -631,24 +645,24 @@ us_fastmap_draw_i:
 .llp:	sub c,     4
 	mov [P2_RW], x1
 	mov [P3_RW], x0
-	add x1,    1
+	add x1,    [$.add]
 	xne x1,    [$.swr]
-	sub x1,    [$.slr]
+	sub x1,    [$.sor]
 .lt3:	mov [P2_RW], x1
 	mov [P3_RW], x0
-	add x1,    1
+	add x1,    [$.add]
 	xne x1,    [$.swr]
-	sub x1,    [$.slr]
+	sub x1,    [$.sor]
 .lt2:	mov [P2_RW], x1
 	mov [P3_RW], x0
-	add x1,    1
+	add x1,    [$.add]
 	xne x1,    [$.swr]
-	sub x1,    [$.slr]
+	sub x1,    [$.sor]
 .lt1:	mov [P2_RW], x1
 	mov [P3_RW], x0
-	add x1,    1
+	add x1,    [$.add]
 	xne x1,    [$.swr]
-	sub x1,    [$.slr]
+	sub x1,    [$.sor]
 .lt0:	jnz c,     .llp
 
 	; Restore CPU regs & exit

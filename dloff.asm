@@ -24,22 +24,18 @@ us_dloff_from_i:
 .dol	equ	1		; Display list PRAM word offset, low
 .dsi	equ	2		; Display list size
 
-	; Shift offset one bit right to get 32 bit offsets
+	; Shift offset five positions to the right for display list
 
-	mov x3,    1
+	mov x3,    5
 	shr c:[$.doh], x3
-	src [$.dol], x3
+	src [$.dol], x3		; $.dol contains display list offset
 
 	; Compose the display list definition
 
-	mov x3,    0xFFC0
+	mov x3,    0xFFFC
+	mov c,     0x0003
 	and x3,    [$.dol]
-	mov c,     0x000F
-	and c,     [$.doh]
-	or  x3,    c
-	mov c,     3
 	and c,     [$.dsi]
-	shl c,     4
 	or  x3,    c
 
 	; Done
@@ -55,19 +51,11 @@ us_dloff_to_i:
 
 .dls	equ	0		; Offset in Display List Definition format
 
-	; Rotate offset out to get 32 bit offset in c:x3
+	; Simply remove size and shift left five positions
 
-	mov x3,    0xFFCF
+	mov x3,    0xFFFC
 	and x3,    [$.dls]
-	shr c:x3,  4
-
-	; Make word offset of it into c:x3
-
-	mov [$.dls], c
-	shl c:x3,  1
-	xch c,     [$.dls]
-	shl c,     1
-	or  c,     [$.dls]
+	shl c:x3,  5
 
 	; Done
 

@@ -68,7 +68,6 @@ us_smux_setptr_i:
 	; Load display list size & prepare masks
 
 	mov a,     [$.dld]
-	shr a,     4
 	and a,     3		; Display list entry size
 	add a,     7		; 0 => 4 * 32 bit entries etc.
 
@@ -79,10 +78,8 @@ us_smux_setptr_i:
 
 	; Calculate absolute display list offset
 
-	mov d,     [$.dld]
-	shr c:d,   4
-	or  d,     c
-	and d,     0xFFFC	; Offset bits recovered as 512 bit offset
+	mov d,     0xFFFC
+	and d,     [$.dld]	; Offset bits recovered as 512 bit offset
 	shl c:d,   9		; Bit offset of display list
 	add b,     c
 	add c:d,   [$.psy]
@@ -129,7 +126,6 @@ us_smux_reset_i:
 
 	mov c,     [P_GDG_DLDEF]
 	mov x3,    4		; Smallest display list size is 4 entries
-	shr c,     4
 	and c,     3
 	shl x3,    c		; 'x3': Count of entries on a display list row
 
@@ -227,7 +223,7 @@ us_smux_add_i:
 	; a shift source is useless).
 
 	mov x3,    [$.rcl]
-	shr x3,    12
+	shr x3,    13
 	and x3,    7		; Source definition select
 	add x3,    P_GDG_SA0
 	mov d,     0x7F
@@ -379,12 +375,12 @@ us_smux_addxy_i:
 	; a shift source is useless).
 
 	mov x3,    [$.rcl]
-	shr x3,    12
+	shr x3,    13
 	and x3,    7		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     0x7F
-	and d,     [x3]		; Load source definition
-	mov [$.mul], d
+	mov c,     0x7F
+	and c,     [x3]		; Load source definition
+	mov [$.mul], c
 
 	; Check on-screen
 
@@ -394,9 +390,14 @@ us_smux_addxy_i:
 	jms .onsc
 
 	; Negative X: possibly partly on-screen. Need to check this situation.
+	; If X expansion is set, the source width duplicates, this also needs
+	; to be considered here.
 
+	sub x3,    1		; Back to the source definition
 	mov d,     [$.mul]
 	shl d,     3		; Source width in pixels
+	xbc [x3],  11
+	shl d,     1		; Width with X expansion
 	add d,     a
 	xsg d,     0		; 1 or more (signed): graphics is on-screen
 	jms us_smux_add_i.exit

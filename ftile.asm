@@ -29,14 +29,14 @@
 ;
 ; The blit configuration:
 ;
-; bit 13-15: Bits 5-7 of Pixel OR mask
-; bit    12: Bit 4 of Pixel OR mask or High bit of Reindex bank select
+; bit 13-15: Unused
+; bit    12: High bit of Reindex bank select
 ; bit  9-11: Unused
-; bit     8: If set, colorkey is 0x01, otherwise 0x00
+; bit     8: If set, colorkey is 0x1, otherwise 0x0
 ; bit     7: Unused
 ; bit     6: Reindex by destination if set (if bit 5 is also set)
 ; bit     5: Tile index layout (0: OR mask + 12 bit; 1: Reindexing + 12 bit)
-; bit     4: If set, 8 bit mode, otherwise 4 bit mode
+; bit     4: Unused
 ; bit     3: Colorkey enabled if set
 ; bit  0- 2: Unused
 ;
@@ -145,17 +145,14 @@ us_ftile_blit_i:
 
 	mov c,     0x0015
 	mov [P_GFIFO_ADDR], c
-	mov c,     0x18		; Retain VBT and VCK
-	and c,     [us_ftile_mcfg]
-	mov x3,    0x7
+	mov x3,    0x3
 	and x3,    [$.idx]
-	or  x3,    c
+	xbc [us_ftile_mcfg], 3	; VCK set?
+	bts x3,    3
 	mov [P_GFIFO_DATA], x3	; 0x0015: Blit configuration
 	mov x3,    0xFFF	; 4096 chars
 	and x3,    [$.idx]
 	shr x3,    2
-	xbc c,     4		; VBT set? (8 bit mode)
-	shr x3,    1		; 8 bit mode: 8 bitplanes instead of 4
 	mul x3,    [us_ftile_imul]
 	add x3,    [us_ftile_moff]
 	mov c,     0x001A
@@ -179,16 +176,13 @@ us_ftile_blit_i:
 	shr x3,    12		; The low 4 bits of the OR mask / Reindex
 	mov c,     [us_ftile_mcfg]
 	xbs c,     5
-	jms .orm		; To OR mask
+	jms .roe		; To OR mask
 	xbs c,     6
 	jms .rin		; To normal reindexing
 
 	; Reindex by destination & OR mask
 
 	or  x3,     0x6000	; VDR, VRE set: Reindex by destination
-.orm:	shr c,      12
-	shl c,      4		; High bits of OR mask
-	or  x3,     c
 	jms .roe
 
 .rin:	; Normal reindexing
@@ -228,14 +222,12 @@ us_ftile_gethw_i:
 ;
 us_ftile_setch_i:
 .srp	equ	0		; Source pointer
-.col	equ	1		; New color high bits to set
+.col	equ	1		; New reindex high bit to set
 
 	mov x3,    [$.srp]
 	add x3,    7
-	mov c,     0x0FFF
-	and [x3],  c
+	btc [x3],  12
 	sub x3,    1
-	mov c,     [$.col]
-	shl c,     12
-	or  [x3],  c
+	xbc [$.col], 0
+	bts [x3],  12
 	rfn c:x3,  0

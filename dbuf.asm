@@ -126,8 +126,8 @@ us_dbuf_init_i:
 	; internal display list variables.
 
 	mov [us_dbuf_dl], x3
-	and x3,    0x0030
-	mov c,     0xFFCF
+	and x3,    0x0003
+	mov c,     0xFFFC
 	and [$.dl2], c
 	or  x3,    [$.dl2]
 	mov [us_dbuf_wl], x3
