@@ -223,11 +223,15 @@ us_smux_add_i:
 	; a shift source is useless).
 
 	mov x3,    [$.rcl]
-	shr x3,    13
-	and x3,    7		; Source definition select
+	shr x3,    13		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     0x7F
-	and d,     [x3]		; Load source definition
+	mov a,     [x3]
+	mov d,     0x3F
+	and d,     a
+	shl d,     1		; Size in cells instead of cell pairs
+	xbs a,     6		; Tiled mode: Always like X expanded
+	xbc a,     11		; X expanded mode
+	shr d,     1		; X expanded mode: a cell pair needs one cell source
 	mov [$.mul], d
 
 .entr:	; Clip the graphics component if needed. If partial from the top, the
@@ -371,16 +375,19 @@ us_smux_addxy_i:
 	mov [$.dld], x3
 
 	; Retrieve source width to know how much to add to the source line
-	; select to advance one line. Shift source is ignored (in this routine
-	; a shift source is useless).
+	; select to advance one line. Shift source and Tiled mode are ignored
+	; (in this routine these are useless).
 
 	mov x3,    [$.rcl]
-	shr x3,    13
-	and x3,    7		; Source definition select
+	shr x3,    13		; Source definition select
 	add x3,    P_GDG_SA0
-	mov c,     0x7F
-	and c,     [x3]		; Load source definition
-	mov [$.mul], c
+	mov x3,    [x3]
+	mov d,     0x3F
+	and d,     x3
+	mov c,     d		; Store away cell pair width, the output width
+	xbs x3,    11		; X expanded mode
+	shl d,     1		; Non X expanded mode needs 2 cells per cell pair
+	mov [$.mul], d
 
 	; Check on-screen
 
@@ -390,16 +397,10 @@ us_smux_addxy_i:
 	jms .onsc
 
 	; Negative X: possibly partly on-screen. Need to check this situation.
-	; If X expansion is set, the source width duplicates, this also needs
-	; to be considered here.
 
-	sub x3,    1		; Back to the source definition
-	mov d,     [$.mul]
-	shl d,     3		; Source width in pixels
-	xbc [x3],  11
-	shl d,     1		; Width with X expansion
-	add d,     a
-	xsg d,     0		; 1 or more (signed): graphics is on-screen
+	shl c,     4		; Output width in pixels
+	add c,     a
+	xsg c,     0		; 1 or more (signed): graphics is on-screen
 	jms us_smux_add_i.exit
 
 	; Graphics on-screen, render it

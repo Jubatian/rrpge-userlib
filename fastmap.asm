@@ -149,15 +149,6 @@ us_fastmap_gethw_i:
 	mov [$.tlh], c
 	mov [$.tlw], x3
 
-	; Tile width doubles in X expanded mode
-
-	mov x3,    [$.flg]
-	shr x3,    13		; Source definition select
-	add x3,    P_GDG_SA0
-	mov c,     1
-	xbc [x3],  11
-	shl [$.tlw], c
-
 	; Extract display area width from the appropriate shift mode region
 	; register. Rescale it to tile boundary.
 
@@ -165,7 +156,8 @@ us_fastmap_gethw_i:
 	xbc [$.flg], 15
 	mov x3,    [P_GDG_SMRB]	; Load appropriate shift mode region
 	shr x3,    8
-	and x3,    0x7F		; Output width in cells
+	and x3,    0x3F
+	shl x3,    1		; Output width in cells
 	xbs [$.flg], 2		; Only Y scrolling expected: No extra tile
 	add x3,    [$.tlw]	; One tile wider to support scrolling
 	add x3,    [$.tlw]	; Fractional sizes rounded up to next boundary
@@ -354,7 +346,8 @@ us_fastmap_draw_i:
 	xbc [$.flg], 15
 	mov a,     [P_GDG_SMRB]	; Load appropriate shift mode region
 	shr a,     8
-	and a,     0x7F		; Output width in cells
+	and a,     0x3F
+	shl a,     1		; Output width in cells
 	xne a,     0
 	jms .exit		; Zero width: Nothing to render
 
@@ -363,15 +356,6 @@ us_fastmap_draw_i:
 	jfa us_tmap_gettilehw_i {x0}
 	mov [$.tlh], c
 	mov [$.tlw], x3
-
-	; Tile width doubles in X expanded mode
-
-	mov x3,    [$.flg]
-	shr x3,    13		; Source definition select
-	add x3,    P_GDG_SA0
-	mov c,     1
-	xbc [x3],  11
-	shl [$.tlw], c
 
 	; Rescale output width to tile boundary.
 
@@ -596,8 +580,9 @@ us_fastmap_draw_i:
 	; Prepare X, which will produce bits 0-9 of the render command, and
 	; combine into the render command config.
 
-	mov x3,    0x03FF
-	and x3,    [$.psx]
+	mov x3,    [$.psx]
+	neg x3,    x3
+	and x3,    0x03FF
 	or  x0,    x3
 
 	; Prepare Y, selecting the appropriate source offset. The source
@@ -607,7 +592,8 @@ us_fastmap_draw_i:
 	shr x3,    13		; Source definition
 	add x3,    P_GDG_SA0
 	mov x3,    [x3]
-	and x3,    7		; Source width (1, 2, 4, 8, 16, 32, 64 or 128 cells)
+	and x3,    7		; Source width (1, 2, 4, 8, 16, 32, 64 or 128 cell pairs)
+	add x3,    1		; Source width in cells
 	mov c,     1
 	shl c,     x3
 	mov [$.add], c		; Source offset add value prepared
