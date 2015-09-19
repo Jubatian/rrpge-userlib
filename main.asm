@@ -86,7 +86,8 @@ org 0xE000				; Bottom of entry table
 	jma us_sin_i			; 0xE080 math.asm
 	jma us_cos_i			; 0xE082 math.asm
 	jma us_sincos_i			; 0xE084 math.asm
-	jma us_tfreq_i			; 0xE086 math.asm
+	nop				; 0xE086
+	nop
 	jma us_mul32_i			; 0xE088 math.asm
 	jma us_div32_i			; 0xE08A math.asm
 	jma us_rec16_i			; 0xE08C math.asm
