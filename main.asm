@@ -50,8 +50,7 @@ org 0xE000				; Bottom of entry table
 	jma us_dlist_addbg_i		; 0xE03A dlist.asm
 	jma us_dlist_addlist_i		; 0xE03C dlist.asm
 	jma us_dlist_clear_i		; 0xE03E dlist.asm
-	nop				; 0xE040
-	nop
+	jma us_dlist_setbounds_i	; 0xE040 dlist.asm
 	jma us_dbuf_init_i		; 0xE042 dbuf.asm
 	jma us_dlist_sb_setptr_i	; 0xE044 dlist_sb.asm
 	jma us_dlist_sb_add_i		; 0xE046 dlist_sb.asm

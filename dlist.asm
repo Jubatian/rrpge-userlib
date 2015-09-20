@@ -7,11 +7,50 @@
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
 ;
+;
+; Uses the following CPU RAM locations:
+; 0xFDAC: Vertical limit, low
+; 0xFDAD: Vertical limit, high
+;
+
 
 include "rrpge.asm"
 include "dloff.asm"
 
 section code
+
+
+
+; 0xFDAC: Vertical limit, low
+us_dlist_vl	equ	0xFDAC
+; 0xFDAD: Vertical limit, high
+us_dlist_vh	equ	0xFDAD
+
+
+
+;
+; Implementation of us_dlist_setbounds
+;
+us_dlist_setbounds_i:
+
+.vll	equ	0		; Vertical limit, low
+.vlh	equ	1		; Vertical limit, high
+
+	mov c,     [$.vll]
+	mov x3,    [$.vlh]
+	xsg c,     0		; Clip to zero on the bottom
+	mov c,     0
+	xsg x3,    0
+	mov x3,    0
+	xsg 400,   c		; Clip to 400 on the top
+	mov c,     400
+	xsg 400,   x3
+	mov x3,    400
+	xsg x3,    c		; Swap if low limit is higher than high limit
+	xch x3,    c
+	mov [us_dlist_vl], c
+	mov [us_dlist_vh], x3
+	rfn c:x3,  0
 
 
 
@@ -127,23 +166,22 @@ us_dlist_add_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    400
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_dlist_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
+	xbc [$.hgt], 15		; (Note: ZERO HEIGHT may remain here!)
+	jms .exit		; Turned negative: off display to the top
 	mul a,     [$.mul]	; For new source line select
 	sub [$.rch], a		; OK, new source start calculated
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+.ntc:	mov a,     [us_dlist_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Set up PRAM pointers
 
@@ -270,21 +308,20 @@ us_dlist_addbg_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    400
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_dlist_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+	xbc [$.hgt], 15		; (Note: ZERO HEIGHT may remain here!)
+	jms .exit		; Turned negative: off display to the top
+.ntc:	mov a,     [us_dlist_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Set up PRAM pointers
 
@@ -342,24 +379,23 @@ us_dlist_addlist_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    400
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_dlist_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
+	xbc [$.hgt], 15		; (Note: ZERO HEIGHT may remain here!)
+	jms .exit		; Turned negative: off display to the top
 	shl a,     1		; To command list offset
 	sub c:[$.cll], a
 	add [$.clh], c		; Adjust command list start (carry is 0xFFFF on borrow)
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+.ntc:	mov a,     [us_dlist_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Set up PRAM pointers
 

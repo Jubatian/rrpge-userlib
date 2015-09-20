@@ -19,6 +19,10 @@
 ; 0xFDCE: Count of columns to use.
 ; 0xFDCD: Bit0: if clear, indicates the occupation data is dirty.
 ;
+; Also uses the followings from the Display list manager (dlist.asm):
+; 0xFDAC: Vertical limit, low
+; 0xFDAD: Vertical limit, high
+;
 ; Also adds a Page flip hook (to clear the occupation data).
 ;
 ; Occupation data format:
@@ -44,6 +48,10 @@ us_smux_cs	equ	0xFDCF
 us_smux_cc	equ	0xFDCE
 ; 0xFDCD: Dirty flag on bit 0: clear if dirty.
 us_smux_df	equ	0xFDCD
+; 0xFDAC: Vertical limit, low
+us_smux_vl	equ	0xFDAC
+; 0xFDAD: Vertical limit, high
+us_smux_vh	equ	0xFDAD
 
 
 
@@ -238,25 +246,24 @@ us_smux_add_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    400
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_smux_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
+	mov x3,    0
+	xbs [$.hgt], 15
+	xne [$.hgt], x3
+	jms .exit		; Turned negative or zero: off display to the top
 	mul a,     [$.mul]	; For new source line select
 	sub [$.rch], a		; OK, new source start calculated
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+.ntc:	mov a,     [us_smux_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
-	xne a,     0
-	jms .exit		; Exit on zero (not handled in the main loop)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Rows will be added, so dirty flag will indicate the need to clear
 
@@ -441,26 +448,25 @@ us_smux_addlist_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    400
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_smux_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
+	mov x3,    0
+	xbs [$.hgt], 15
+	xne [$.hgt], x3
+	jms .exit		; Turned negative or zero: off display to the top
 	shl a,     1		; To command list offset
 	sub c:[$.cll], a
 	add [$.clh], c		; Adjust command list start (carry is 0xFFFF on borrow)
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+.ntc:	mov a,     [us_smux_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
-	xne a,     0
-	jms .exit		; Exit on zero (not handled in the main loop)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Rows will be added, so dirty flag will indicate the need to clear
 
