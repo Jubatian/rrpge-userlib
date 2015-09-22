@@ -293,6 +293,14 @@ us_strcpynz		equ	0xE140
 us_strcpy		equ	0xE142
 us_printfnz		equ	0xE144
 us_printf		equ	0xE146
+us_aubuf_init		equ	0xE148
+us_aubuf_setecnt	equ	0xE14A
+us_aubuf_isempty	equ	0xE14C
+us_aubuf_blockdone	equ	0xE14E
+us_aubuf_getlf		equ	0xE150
+us_aubuf_getrt		equ	0xE152
+us_aubuf_mixlf		equ	0xE154
+us_aubuf_mixrt		equ	0xE156
 
 
 ;

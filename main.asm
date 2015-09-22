@@ -183,6 +183,15 @@ org 0xE000				; Bottom of entry table
 	jma us_strcpy_i			; 0xE142 printf.asm
 	jma us_printfnz_i		; 0xE144 printf.asm
 	jma us_printf_i			; 0xE146 printf.asm
+	jma us_aubuf_init_i		; 0xE148 aubuf.asm
+	jma us_aubuf_setecnt_i		; 0xE14A aubuf.asm
+	jma us_aubuf_isempty_i		; 0xE14C aubuf.asm
+	jma us_aubuf_blockdone_i	; 0xE14E aubuf.asm
+	jma us_aubuf_getlf_i		; 0xE150 aubuf.asm
+	jma us_aubuf_getrt_i		; 0xE152 aubuf.asm
+	jma us_aubuf_mixlf_i		; 0xE154 aubuf.asm
+	jma us_aubuf_mixrt_i		; 0xE156 aubuf.asm
+
 
 
 	; User Library code starts after the table
@@ -212,3 +221,4 @@ include "charw.asm"
 include "charwt.asm"
 include "ftile.asm"
 include "printf.asm"
+include "aubuf.asm"
