@@ -7,11 +7,50 @@
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
 ;
+;
+; Uses the following CPU RAM locations:
+; 0xFDAC: Vertical limit, low
+; 0xFDAD: Vertical limit, high
+;
+
 
 include "rrpge.asm"
 include "dloff.asm"
 
 section code
+
+
+
+; 0xFDAC: Vertical limit, low
+us_dlist_vl	equ	0xFDAC
+; 0xFDAD: Vertical limit, high
+us_dlist_vh	equ	0xFDAD
+
+
+
+;
+; Implementation of us_dlist_setbounds
+;
+us_dlist_setbounds_i:
+
+.vll	equ	0		; Vertical limit, low
+.vlh	equ	1		; Vertical limit, high
+
+	mov c,     [$.vll]
+	mov x3,    [$.vlh]
+	xsg c,     0		; Clip to zero on the bottom
+	mov c,     0
+	xsg x3,    0
+	mov x3,    0
+	xsg 400,   c		; Clip to 400 on the top
+	mov c,     400
+	xsg 400,   x3
+	mov x3,    400
+	xsg x3,    c		; Swap if low limit is higher than high limit
+	xch x3,    c
+	mov [us_dlist_vl], c
+	mov [us_dlist_vh], x3
+	rfn c:x3,  0
 
 
 
@@ -32,11 +71,6 @@ us_dlist_setptr_i:
 
 	mov a,     [$.dld]
 	and a,     3		; Display list entry size
-	mov d,     0xFFFC
-	shl d,     a
-	and d,     0x07FC	; Mask for display list offset
-	xbc [$.dld], 13		; Double scan?
-	add a,     1		; 0 / 1 / 2 / 3 / 4
 	add a,     7		; 0 => 4 * 32 bit entries etc.
 
 	; Calculate bit offset within display list
@@ -49,8 +83,9 @@ us_dlist_setptr_i:
 
 	; Calculate absolute display list offset
 
-	and d,     [$.dld]	; Apply mask on display list def. into the mask
-	shl c:d,   14		; Bit offset of display list
+	mov d,     0xFFFC
+	and d,     [$.dld]	; Offset bits recovered as 512 bit offset
+	shl c:d,   9		; Bit offset of display list
 	mov x0,    c
 	add c:d,   [$.psy]
 	adc x0,    b		; Start offset in x0:d acquired
@@ -58,7 +93,7 @@ us_dlist_setptr_i:
 	; Prepare PRAM pointer fill. In 'c' prepares a zero for incr. high
 
 	mov b,     1
-	shl c:b,   a		; 128 / 256 / 512 / 1024 / 2048 bit per line
+	shl c:b,   a		; 128 / 256 / 512 / 1024 bit per line
 	mov a,     4		; 16 bit pointer, always increment
 
 	; Fill PRAM pointers
@@ -106,45 +141,47 @@ us_dlist_add_i:
 
 	psh a, d
 
-	; Calculate source width multiplier so to know how many to add to the
-	; source line select to advance one line. The multiplier stays one if
-	; the source is a shift source.
+	; Retrieve source width to know how much to add to the source line
+	; select to advance one line.
 
-	mov x3,    [$.rch]
-	shr x3,    12
-	and x3,    7		; Source definition select
+	mov x3,    [$.rcl]
+	shr x3,    13		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     [x3]		; Load source definition
-	xbc d,     4
-	mov d,     0		; Shift source: multiplier is 1
-	and d,     0xF
-	shl d,     1
-	add d,     1		; Width multiplier: 1 to 31, odd
+	mov a,     [x3]
+	mov d,     0x3F
+	and d,     a
+	xbs a,     6		; Tiled mode: Shift source bit ignored
+	xbs a,     7		; Shift source
+	jms .nsh
+	mov x3,    d
+	mov d,     1
+	shl d,     x3
+.nsh:	shl d,     1		; Size in cells instead of cell pairs
+	xbs a,     6		; Tiled mode: Always like X expanded
+	xbc a,     11		; X expanded mode
+	shr d,     1		; X expanded mode: a cell pair needs one cell source
 	mov [$.mul], d
 
 .entr:	; Clip the graphics component if needed. If partial from the top, the
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_dlist_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
+	xbc [$.hgt], 15		; (Note: ZERO HEIGHT may remain here!)
+	jms .exit		; Turned negative: off display to the top
 	mul a,     [$.mul]	; For new source line select
 	sub [$.rch], a		; OK, new source start calculated
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+.ntc:	mov a,     [us_dlist_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Set up PRAM pointers
 
@@ -198,7 +235,7 @@ us_dlist_addxy_i:
 .psx	equ	5		; X position (2's complement)
 .psy	equ	6		; Y position (2's complement)
 
-.mul	equ	6		; Width multiplier
+.mul	equ	6		; Width
 
 	mov sp,    7
 
@@ -213,54 +250,38 @@ us_dlist_addxy_i:
 	mov a,     [$.psy]
 	xch a,     [$.psx]
 
-	; Calculate source width multiplier so to know how many to add to the
-	; source line select to advance one line. Shift source is not checked
-	; (in this routine using a shift source is useless).
+	; Retrieve source width to know how much to add to the source line
+	; select to advance one line. Shift source and Tiled mode are ignored
+	; (in this routine these are useless).
 
-	mov x3,    [$.rch]
-	shr x3,    12
-	and x3,    7		; Source definition select
+	mov x3,    [$.rcl]
+	shr x3,    13		; Source definition select
 	add x3,    P_GDG_SA0
-	mov d,     [x3]		; Load source definition
-	and d,     0xF
-	shl d,     1
-	add c:d,   1		; Width multiplier: 1 to 31, odd (c is zeroed)
+	mov x3,    [x3]
+	mov d,     0x3F
+	and d,     x3
+	mov c,     d		; Store away cell pair width, the output width
+	xbs x3,    11		; X expanded mode
+	shl d,     1		; Non X expanded mode needs 2 cells per cell pair
 	mov [$.mul], d
-
-	; Set C to one for 8 bit mode, to be used in subsequend mode specific
-	; adjustments.
-
-	xbc [$.dld], 12		; 4 bit mode if clear
-	mov c,     1		; 1 in 8 bit mode, 0 in 4 bit mode
-
-	; Calculate X high limit
-
-	mov x3,    640
-	shr x3,    c		; 320 in 8 bit mode
 
 	; Check on-screen
 
-	xug x3,    a		; Off-screen to the right?
+	xug 640,   a		; Off-screen to the right?
 	jms us_dlist_add_i.exit
 	xbs a,     15		; Signed? If so, maybe partly on-screen on left.
 	jms .onsc
 
 	; Negative X: possibly partly on-screen. Need to check this situation.
 
-	mov x3,    [$.rch]
-	shl x3,    5
-	and x3,    7		; Source line size shift
-	sbc x3,    0xFFFD	; Adjust: +3 (8 pixels / cell) for 4 bit, +2 (4 pixels / cell) for 8 bit mode
-	mov d,     [$.mul]
-	shl d,     x3		; Width of graphic element in pixels
-	add d,     a
-	xsg d,     0		; 1 or more (signed): graphics is on-screen
+	shl c,     4		; Output width in pixels
+	add c,     a
+	xsg c,     0		; 1 or more (signed): graphics is on-screen
 	jms us_dlist_add_i.exit
 
 	; Graphics on-screen, render it
 
-.onsc:	shl a,     c		; Double X position for 8 bit mode
-	and a,     0x03FF	; 10 bits for shift / position
+.onsc:	and a,     0x03FF	; 10 bits for shift / position
 	mov d,     0xFC00	; Preserve high part of command
 	and [$.rcl], d
 	or  [$.rcl], a
@@ -287,23 +308,20 @@ us_dlist_addbg_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_dlist_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+	xbc [$.hgt], 15		; (Note: ZERO HEIGHT may remain here!)
+	jms .exit		; Turned negative: off display to the top
+.ntc:	mov a,     [us_dlist_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Set up PRAM pointers
 
@@ -361,26 +379,23 @@ us_dlist_addlist_i:
 	; render command itself also alters so respecting the first visible
 	; line.
 
-	mov x3,    200
-	xbs [$.dld], 13		; Double scanned if set
-	shl x3,    1		; Make 400 if not double scanned
-	xbs [$.psy], 15
-	jms .ntc		; Positive or zero: no top clip required
-	mov a,     [$.psy]
+	mov a,     [us_dlist_vl]
+	xsg a,     [$.psy]
+	jms .ntc		; No top clip required
+	xch a,     [$.psy]	; New Y start set in $.psy
+	sub a,     [$.psy]	; 'a': Vertical relocation (negative)
 	add [$.hgt], a		; New height
-	xbc [$.hgt], 15
-	jms .exit		; Turned negative: off screen to the top
+	xbc [$.hgt], 15		; (Note: ZERO HEIGHT may remain here!)
+	jms .exit		; Turned negative: off display to the top
 	shl a,     1		; To command list offset
 	sub c:[$.cll], a
 	add [$.clh], c		; Adjust command list start (carry is 0xFFFF on borrow)
-	mov a,     0
-	mov [$.psy], a		; New Y start (0)
-.ntc:	xug x3,    [$.psy]	; Completely off screen to the bottom?
+.ntc:	mov a,     [us_dlist_vh]
+	xug a,     [$.psy]	; Completely off display to the bottom?
 	jms .exit
-	mov a,     x3
 	sub a,     [$.psy]	; Number of px. available for the source
 	xug a,     [$.hgt]
-	mov [$.hgt], a		; Truncate height if necessary (may become 0)
+	mov [$.hgt], a		; Truncate height if necessary
 
 	; Set up PRAM pointers
 
@@ -430,20 +445,20 @@ us_dlist_clear_i:
 
 .dld	equ	0		; Display List Definition
 
-	; Load display list size & prepare masks
+	; Load display list offset and size
+
+	mov x3,    0xFFFC
+	and x3,    [$.dld]	; Offset bits recovered as 512 bit offset
 
 	mov c,     [$.dld]
 	and c,     3		; Display list entry size
-	mov x3,    0xFFFC
-	shl x3,    c
-	and x3,    0x07FC	; Mask for display list offset
 
 	; Prepare and fire a PRAM set
 
-	and [$.dld], x3		; Mask out offset bits in list
+	mov [$.dld], x3
 	mov x3,    3200		; Smallest display list size (400 * 8 words)
 	shl x3,    c		; Display list's size in x3
-	mov c,     10		; Shift offset to word
+	mov c,     5		; Shift offset to word (16 bit offset)
 	shl c:[$.dld], c
 	jfa us_set_p_i {c, [$.dld], 0, x3}
 

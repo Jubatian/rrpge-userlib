@@ -2,7 +2,7 @@
 ; RRPGE User Library functions - Display List offset converters
 ;
 ; Author    Sandor Zsuga (Jubatian)
-; Copyright 2013 - 2014, GNU GPLv3 (version 3 of the GNU General Public
+; Copyright 2013 - 2015, GNU GPLv3 (version 3 of the GNU General Public
 ;           License) extended as RRPGEvt (temporary version of the RRPGE
 ;           License): see LICENSE.GPLv3 and LICENSE.RRPGEvt in the project
 ;           root.
@@ -20,21 +20,27 @@ section code
 ;
 us_dloff_from_i:
 
-.doh	equ	0		; Display list PRAM offset, high
-.dol	equ	1		; Display list PRAM offset, low
+.doh	equ	0		; Display list PRAM word offset, high
+.dol	equ	1		; Display list PRAM word offset, low
 .dsi	equ	2		; Display list size
 
-	; Shift offset up into $.doh, so a transfer to us_dloff_clip is
-	; possible
+	; Shift offset five positions to the right for display list
 
-	mov x3,    6
-	shl c:[$.dol], x3
-	slc [$.doh], x3
+	mov x3,    5
+	shr c:[$.doh], x3
+	src [$.dol], x3		; $.dol contains display list offset
 
-	; Transfer, so us_dloff_clip will finish it.
+	; Compose the display list definition
 
-	mov c,     [$.dsi]
-	jms us_dloff_clip_i.entr
+	mov x3,    0xFFFC
+	mov c,     0x0003
+	and x3,    [$.dol]
+	and c,     [$.dsi]
+	or  x3,    c
+
+	; Done
+
+	rfn c:x3,  x3
 
 
 
@@ -45,35 +51,12 @@ us_dloff_to_i:
 
 .dls	equ	0		; Offset in Display List Definition format
 
-	; Sanitize offset
+	; Simply remove size and shift left five positions
 
-	jfa us_dloff_clip_i {[$.dls]}
-	and x3,    0x07FC	; Cut size bits
-
-	; Create word offset and return
-
-	shl c:x3,  10
-	rfn
-
-
-
-;
-; Implementation of us_dloff_clip
-;
-us_dloff_clip_i:
-
-.dls	equ	0		; Offset in Display List Definition format
-
-	; Create size mask
-
-	mov c,     [$.dls]
-.entr:	and c,     3		; Size bits
-	not x3,    0x0003	; Loads 0xFFFC
-	shl x3,    c
-	and x3,    0x07FC	; Size dependent mask created
-
-	; Combine into display list offset and return
-
+	mov x3,    0xFFFC
 	and x3,    [$.dls]
-	or  x3,    c
-	rfn c:x3,  x3
+	shl c:x3,  5
+
+	; Done
+
+	rfn

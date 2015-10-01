@@ -213,30 +213,40 @@ us_cos_i:
 .entr:	; Entry point for us_sin
 
 	shr c:x3,  7
-	or  x3,    0xFE00
+	or  x3,    0xFE00	; up_sine, need direct value for comparisons
 
-	; Special cases (negative crossovers are also included since normally
-	; interpolating would do those with unsigned logic).
+	; "Whole" angle from the table: return fast
 
 	xne c,     0
 	rfn x3,    [x3]		; "Whole" angles from the table
-	xne x3,    0xFF00
-	jms .crzn		; Zero => Negative crossover
-	xne x3,    0xFFFF
-	jms .crnz		; Negative => Zero crossover
 
-	; Do a normal linear interpolation between 2 points
+	; Do linear interpolation between 2 points
 
-	mov [$0],  c		; $0: Multiplier (high)
-	mov c,     [x3]		; c:  Low
-	mov x3,    [x3]		; x3: High
-	xch c,     x3		; c:  High; x3: Low
-	mul c:c,   [$0]		; c:  HighM
-	xch c,     [$0]		; c:  Multiplier (high); $0: HighM
-	neg c,     c		; c:  Multiplier (low)
-	mul c:x3,  c		; c:  LowM
-	add c,     [$0]		; c:  LowM + HighM (Interpolated result)
-	rfn c:x3,  c
+	xug x3,    0xFF7F	; 0xFF80 - 0xFFFF: Next value is larger
+	xug x3,    0xFE7F	; 0xFE80 - 0xFF7F: Next value is smaller
+	jms .inc		; 0xFE00 - 0xFE7F: Next value is larger
+
+.dec:	xne x3,    0xFF00
+	jms .crzn		; Special: Zero => Negative crossover
+	neg c,     c		; Negate multiplier
+	mov [$0],  c		; $0: Multiplier
+	mov c,     [x3]		; c:  Low  (larger)
+	mov x3,    [x3]		; x3: High (smaller)
+	sub c,     x3
+	mul c:c,   [$0]
+	add x3,    c
+	rfn c:x3,  x3
+
+.inc:	xne x3,    0xFFFF
+	jms .crnz		; Special: Negative => Zero crossover
+	mov [$0],  c		; $0: Multiplier
+	mov c,     [x3]		; c:  Low  (smaller)
+	mov x3,    [x3]		; x3: High (larger)
+	xch c,     x3
+	sub c,     x3
+	mul c:c,   [$0]
+	add x3,    c
+	rfn c:x3,  x3
 
 .crzn:	add x3,    1
 	mov x3,    [x3]
@@ -266,57 +276,6 @@ us_sincos_i:
 	jfa us_sin_i {x3}
 	mov c,     [$.ang]
 	rfn
-
-
-
-;
-; Implementation of us_tfreq
-;
-us_tfreq_i:
-
-.ton	equ	0		; Tone
-
-	mov x3,    [$.ton]
-	shr c:x3,  8
-	shl x3,    1		; Make offset (for 2 word records) of x3
-	or  x3,    0xF800
-	xne c,     0
-	jms .fast		; "Whole" semitones from the table
-
-	; Note: For freq > 0xFF00 the result will be bogus as the high end is
-	; fetched from the color table. Don't care.
-
-	; Save registers
-
-	mov sp,    4
-	mov [$3],  a
-
-	; Interpolate
-
-	neg [$0],  c
-	mov a,     [x3]
-	mov c,     [x3]		; a:c: Low end
-	mul c:c,   [$0]
-	mac c:a,   [$0]
-	xch [$0],  c		; [$0]:a: Low Multiplied
-	neg [$1],  c
-	mov c,     [x3]
-	mov x3,    [x3]		; x3:c: High end
-	xch x3,    c
-	mul c:c,   [$1]
-	mac c:x3,  [$1]
-	mov [$2],  c		; [$2]:x3: High Multiplied
-	adc x3,    a
-	add c,     [$0]
-	add c,     [$2]		; Return value summed in c:x3
-
-	; Restore regs & return
-
-	mov a,     [$3]
-	rfn
-
-.fast:	mov c,     [x3]		; High
-	rfn x3,    [x3]		; Low
 
 
 

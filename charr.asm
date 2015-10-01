@@ -125,9 +125,9 @@ us_cr_cbyte_new_i:
 	mov c,     [$.tbl]
 	mov [x3],  c
 	jms us_cr_cbyte_setsi_i	; Tail transfer to set index (which is provided)
-.tfd:	mov c,     up_uf437_h
+.tfd:	mov c,     up16h_uf437
 	mov [x3],  c
-	mov c,     up_uf437_l
+	mov c,     up16l_uf437
 	mov [x3],  c
 	xul sp,    2
 	jms us_cr_cbyte_setsi_i	; Tail transfer to set index
@@ -230,9 +230,9 @@ us_cr_pbyte_new_i:
 	mov [x3],  c
 .tsi:	jfa us_cr_pbyte_setsi_i {[$.opt], [$.idx]}
 	jms us_cr_pbyte_setsb_i	; Tail transfer to set bank
-.tfd:	mov c,     up_uf437_h
+.tfd:	mov c,     up16h_uf437
 	mov [x3],  c
-	mov c,     up_uf437_l
+	mov c,     up16l_uf437
 	mov [x3],  c
 	xul sp,    3
 	jms .tsi		; At least 3 parameters: it has index

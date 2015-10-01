@@ -83,11 +83,11 @@ us_cw_tile_new_i:
 	mov [x3],  c		; Initial X
 	mov [x3],  c		; Initial Y
 	add x3,    3
-	mov c,     up_ffutf_h	; Default value if <=5 parameters
+	mov c,     up16h_ffutf	; Default value if <=5 parameters
 	xul sp,    6
 	mov c,     [$.tbh]
 	mov [x3],  c
-	mov c,     up_ffutf_l	; Default value if <=5 parameters
+	mov c,     up16l_ffutf	; Default value if <=5 parameters
 	xul sp,    6
 	mov c,     [$.tbl]
 	mov [x3],  c

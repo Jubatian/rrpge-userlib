@@ -50,7 +50,7 @@ org 0xE000				; Bottom of entry table
 	jma us_dlist_addbg_i		; 0xE03A dlist.asm
 	jma us_dlist_addlist_i		; 0xE03C dlist.asm
 	jma us_dlist_clear_i		; 0xE03E dlist.asm
-	jma us_dloff_clip_i		; 0xE040 dloff.asm
+	jma us_dlist_setbounds_i	; 0xE040 dlist.asm
 	jma us_dbuf_init_i		; 0xE042 dbuf.asm
 	jma us_dlist_sb_setptr_i	; 0xE044 dlist_sb.asm
 	jma us_dlist_sb_add_i		; 0xE046 dlist_sb.asm
@@ -85,7 +85,8 @@ org 0xE000				; Bottom of entry table
 	jma us_sin_i			; 0xE080 math.asm
 	jma us_cos_i			; 0xE082 math.asm
 	jma us_sincos_i			; 0xE084 math.asm
-	jma us_tfreq_i			; 0xE086 math.asm
+	nop				; 0xE086
+	nop
 	jma us_mul32_i			; 0xE088 math.asm
 	jma us_div32_i			; 0xE08A math.asm
 	jma us_rec16_i			; 0xE08C math.asm
@@ -182,6 +183,15 @@ org 0xE000				; Bottom of entry table
 	jma us_strcpy_i			; 0xE142 printf.asm
 	jma us_printfnz_i		; 0xE144 printf.asm
 	jma us_printf_i			; 0xE146 printf.asm
+	jma us_aubuf_init_i		; 0xE148 aubuf.asm
+	jma us_aubuf_setecnt_i		; 0xE14A aubuf.asm
+	jma us_aubuf_isempty_i		; 0xE14C aubuf.asm
+	jma us_aubuf_blockdone_i	; 0xE14E aubuf.asm
+	jma us_aubuf_getlf_i		; 0xE150 aubuf.asm
+	jma us_aubuf_getrt_i		; 0xE152 aubuf.asm
+	jma us_aubuf_mixlf_i		; 0xE154 aubuf.asm
+	jma us_aubuf_mixrt_i		; 0xE156 aubuf.asm
+
 
 
 	; User Library code starts after the table
@@ -211,3 +221,4 @@ include "charw.asm"
 include "charwt.asm"
 include "ftile.asm"
 include "printf.asm"
+include "aubuf.asm"
